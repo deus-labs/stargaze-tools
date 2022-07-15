@@ -20,7 +20,7 @@ import { useQuery } from 'react-query'
 import { withMetadata } from 'utils/layout'
 import { links } from 'utils/links'
 
-const CW20QueryPage: NextPage = () => {
+const MinterQueryPage: NextPage = () => {
   const { minter: contract } = useContracts()
   const wallet = useWallet()
 
@@ -117,4 +117,4 @@ const CW20QueryPage: NextPage = () => {
   )
 }
 
-export default withMetadata(CW20QueryPage, { center: false })
+export default withMetadata(MinterQueryPage, { center: false })

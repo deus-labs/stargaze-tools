@@ -26,13 +26,106 @@ export interface MinterInstance {
   getMintCount: (address: string) => Promise<any>
 
   //Execute
-  mint: (senderAddress: string) => Promise<string>
+  mint: (senderAddress: string, price: string) => Promise<string>
   setWhitelist: (senderAddress: string, whitelist: string) => Promise<string>
   updateStartTime: (senderAddress: string, time: Timestamp) => Promise<string>
-  updatePerAddressLimit: (senderAddress: string, per_address_limit: number) => Promise<string>
+  updatePerAddressLimit: (senderAddress: string, perAddressLimit: number) => Promise<string>
   mintTo: (senderAddress: string, recipient: string) => Promise<string>
-  mintFor: (senderAddress: string, token_id: number, recipient: string) => Promise<string>
+  mintFor: (senderAddress: string, recipient: string, tokenId: number) => Promise<string>
+  shuffle: (senderAddress: string) => Promise<string>
   withdraw: (senderAddress: string) => Promise<string>
+}
+
+export interface MinterMessages {
+  mint: (contractAddress: string, price: string) => MintMessage
+  setWhitelist: (contractAddress: string, whitelist: string) => SetWhitelistMessage
+  updateStartTime: (contractAddress: string, time: Timestamp) => UpdateStarTimeMessage
+  updatePerAddressLimit: (contractAddress: string, perAddressLimit: number) => UpdatePerAddressLimitMessage
+  mintTo: (contractAddress: string, recipient: string) => MintToMessage
+  mintFor: (contractAddress: string, recipient: string, tokenId: number) => MintForMessage
+  shuffle: (contractAddress: string) => ShuffleMessage
+  withdraw: (contractAddress: string) => WithdrawMessage
+}
+
+export interface MintMessage {
+  sender: string
+  contract: string
+  msg: {
+    mint: Record<string, never>
+  }
+  funds: Coin[]
+}
+
+export interface SetWhitelistMessage {
+  sender: string
+  contract: string
+  msg: {
+    set_whitelist: {
+      whitelist: string
+    }
+  }
+  funds: Coin[]
+}
+
+export interface UpdateStarTimeMessage {
+  sender: string
+  contract: string
+  msg: {
+    update_start_time: string
+  }
+  funds: Coin[]
+}
+
+export interface UpdatePerAddressLimitMessage {
+  sender: string
+  contract: string
+  msg: {
+    update_per_address_limit: {
+      per_address_limit: number
+    }
+  }
+  funds: Coin[]
+}
+
+export interface MintToMessage {
+  sender: string
+  contract: string
+  msg: {
+    mint_to: {
+      recipient: string
+    }
+  }
+  funds: Coin[]
+}
+
+export interface MintForMessage {
+  sender: string
+  contract: string
+  msg: {
+    mint_for: {
+      recipient: string
+      token_id: number
+    }
+  }
+  funds: Coin[]
+}
+
+export interface ShuffleMessage {
+  sender: string
+  contract: string
+  msg: {
+    shuffle: Record<string, never>
+  }
+  funds: Coin[]
+}
+
+export interface WithdrawMessage {
+  sender: string
+  contract: string
+  msg: {
+    withdraw: Record<string, never>
+  }
+  funds: Coin[]
 }
 
 export interface MinterContract {
@@ -46,9 +139,11 @@ export interface MinterContract {
   ) => Promise<InstantiateResponse>
 
   use: (contractAddress: string) => MinterInstance
+
+  messages: () => MinterMessages
 }
 
-export const minter = (client: SigningCosmWasmClient): MinterContract => {
+export const minter = (client: SigningCosmWasmClient, txSigner: string): MinterContract => {
   const use = (contractAddress: string): MinterInstance => {
     //Query
     const getConfig = async (): Promise<any> => {
@@ -87,7 +182,7 @@ export const minter = (client: SigningCosmWasmClient): MinterContract => {
     }
 
     //Execute
-    const mint = async (senderAddress: string): Promise<string> => {
+    const mint = async (senderAddress: string, price: string): Promise<string> => {
       const res = await client.execute(
         senderAddress,
         contractAddress,
@@ -96,6 +191,7 @@ export const minter = (client: SigningCosmWasmClient): MinterContract => {
         },
         'auto',
         '',
+        [coin(price, 'ustars')],
       )
 
       return res.transactionHash
@@ -157,12 +253,26 @@ export const minter = (client: SigningCosmWasmClient): MinterContract => {
       return res.transactionHash
     }
 
-    const mintFor = async (senderAddress: string, tokenId: number, recipient: string): Promise<string> => {
+    const mintFor = async (senderAddress: string, recipient: string, tokenId: number): Promise<string> => {
       const res = await client.execute(
         senderAddress,
         contractAddress,
         {
           mint_for: { token_id: tokenId, recipient },
+        },
+        'auto',
+        '',
+      )
+
+      return res.transactionHash
+    }
+
+    const shuffle = async (senderAddress: string): Promise<string> => {
+      const res = await client.execute(
+        senderAddress,
+        contractAddress,
+        {
+          shuffle: {},
         },
         'auto',
         '',
@@ -198,6 +308,7 @@ export const minter = (client: SigningCosmWasmClient): MinterContract => {
       updatePerAddressLimit,
       mintTo,
       mintFor,
+      shuffle,
       withdraw,
     }
   }
@@ -219,5 +330,115 @@ export const minter = (client: SigningCosmWasmClient): MinterContract => {
     }
   }
 
-  return { use, instantiate }
+  const messages = () => {
+    const mint = (contractAddress: string, price: string): MintMessage => {
+      return {
+        sender: txSigner,
+        contract: contractAddress,
+        msg: {
+          mint: {},
+        },
+        funds: [coin(price, 'ustars')],
+      }
+    }
+
+    const setWhitelist = (contractAddress: string, whitelist: string): SetWhitelistMessage => {
+      return {
+        sender: txSigner,
+        contract: contractAddress,
+        msg: {
+          set_whitelist: {
+            whitelist,
+          },
+        },
+        funds: [],
+      }
+    }
+
+    const updateStartTime = (contractAddress: string, startTime: string): UpdateStarTimeMessage => {
+      return {
+        sender: txSigner,
+        contract: contractAddress,
+        msg: {
+          update_start_time: startTime,
+        },
+        funds: [],
+      }
+    }
+
+    const updatePerAddressLimit = (contractAddress: string, limit: number): UpdatePerAddressLimitMessage => {
+      return {
+        sender: txSigner,
+        contract: contractAddress,
+        msg: {
+          update_per_address_limit: {
+            per_address_limit: limit,
+          },
+        },
+        funds: [],
+      }
+    }
+
+    const mintTo = (contractAddress: string, recipient: string): MintToMessage => {
+      return {
+        sender: txSigner,
+        contract: contractAddress,
+        msg: {
+          mint_to: {
+            recipient,
+          },
+        },
+        funds: [],
+      }
+    }
+
+    const mintFor = (contractAddress: string, recipient: string, tokenId: number): MintForMessage => {
+      return {
+        sender: txSigner,
+        contract: contractAddress,
+        msg: {
+          mint_for: {
+            recipient,
+            token_id: tokenId,
+          },
+        },
+        funds: [],
+      }
+    }
+
+    const shuffle = (contractAddress: string): ShuffleMessage => {
+      return {
+        sender: txSigner,
+        contract: contractAddress,
+        msg: {
+          shuffle: {},
+        },
+        funds: [],
+      }
+    }
+
+    const withdraw = (contractAddress: string): WithdrawMessage => {
+      return {
+        sender: txSigner,
+        contract: contractAddress,
+        msg: {
+          withdraw: {},
+        },
+        funds: [],
+      }
+    }
+
+    return {
+      mint,
+      setWhitelist,
+      updateStartTime,
+      updatePerAddressLimit,
+      mintTo,
+      mintFor,
+      shuffle,
+      withdraw,
+    }
+  }
+
+  return { use, instantiate, messages }
 }

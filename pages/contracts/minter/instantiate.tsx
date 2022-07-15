@@ -26,7 +26,7 @@ import { MINTER_CODE_ID } from 'utils/constants'
 import { withMetadata } from 'utils/layout'
 import { links } from 'utils/links'
 
-const CW721BaseInstantiatePage: NextPage = () => {
+const MinterInstantiatePage: NextPage = () => {
   const wallet = useWallet()
   const contract = useContracts().minter
 
@@ -205,7 +205,6 @@ const CW721BaseInstantiatePage: NextPage = () => {
         symbol: symbolState.value,
         minter: minterState.value,
       }
-      console.log(msg)
       return toast.promise(contract.instantiate(MINTER_CODE_ID, msg, 'Stargaze Minter Contract', wallet.address), {
         loading: 'Instantiating contract...',
         error: 'Instantiation failed!',
@@ -214,7 +213,6 @@ const CW721BaseInstantiatePage: NextPage = () => {
     },
     {
       onError: (error) => {
-        console.log(error)
         toast.error(String(error))
       },
     },
@@ -265,7 +263,7 @@ const CW721BaseInstantiatePage: NextPage = () => {
         <TextInput isRequired {...baseTokenUriState} />
         <NumberInput isRequired {...tokenNumberState} />
         <NumberInput isRequired {...perAddressLimitState} />
-        <FormControl htmlId="start-date" isRequired subtitle="Start time for the minting" title="Start Date">
+        <FormControl htmlId="start-date" isRequired subtitle="Start time for the minting" title="Start Time">
           <InputDateTime minDate={new Date()} onChange={(date) => setStartDate(date)} value={startDate} />
         </FormControl>
         <TextInput {...whitelistAddressState} />
@@ -281,4 +279,4 @@ const CW721BaseInstantiatePage: NextPage = () => {
   )
 }
 
-export default withMetadata(CW721BaseInstantiatePage, { center: false })
+export default withMetadata(MinterInstantiatePage, { center: false })
