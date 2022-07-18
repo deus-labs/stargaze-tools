@@ -201,9 +201,6 @@ const MinterInstantiatePage: NextPage = () => {
         unit_price: coin(String(Number(unitPriceState.value) * 1000000), 'ustars'),
         whitelist_address: whitelistAddressState.value || null,
         start_time: (startDate.getTime() * 1_000_000).toString(),
-        name: nameState.value,
-        symbol: symbolState.value,
-        minter: minterState.value,
       }
       return toast.promise(contract.instantiate(MINTER_CODE_ID, msg, 'Stargaze Minter Contract', wallet.address), {
         loading: 'Instantiating contract...',
