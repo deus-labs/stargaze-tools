@@ -2,7 +2,7 @@ import type { Coin } from '@cosmjs/proto-signing'
 import { useWallet } from 'contexts/wallet'
 import { useCallback, useEffect, useState } from 'react'
 
-import type { SG721Contract, SG721Instance } from './contract'
+import type { SG721Contract, SG721Instance, Sg721Messages } from './contract'
 import { SG721 as initContract } from './contract'
 
 interface InstantiateResponse {
@@ -20,6 +20,7 @@ export interface UseSG721ContractProps {
   ) => Promise<InstantiateResponse>
   use: (customAddress: string) => SG721Instance | undefined
   updateContractAddress: (contractAddress: string) => void
+  messages: (contractAddress: string) => Sg721Messages | undefined
 }
 
 export function useSG721Contract(): UseSG721ContractProps {
@@ -63,9 +64,14 @@ export function useSG721Contract(): UseSG721ContractProps {
     [SG721, address],
   )
 
+  const messages = useCallback((): Sg721Messages | undefined => {
+    return SG721?.messages(address)
+  }, [SG721, address])
+
   return {
     instantiate,
     use,
     updateContractAddress,
+    messages,
   }
 }

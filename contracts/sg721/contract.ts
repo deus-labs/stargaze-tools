@@ -1,4 +1,6 @@
 import type { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate'
+import { toBase64, toUtf8 } from '@cosmjs/encoding'
+import type { Coin } from '@cosmjs/stargate'
 import { coin } from '@cosmjs/stargate'
 
 export interface InstantiateResponse {
@@ -48,23 +50,132 @@ export interface SG721Instance {
   sendNft: (
     contract: string,
     tokenId: string,
-    msg: string, //Binary
+    msg: Record<string, unknown>, //Binary
   ) => Promise<string>
   /// Allows operator to transfer / send the token from the owner's account.
   /// If expiration is set, then this allowance has a time/height limit
-  approve: (spender: string, tokenId: string, expires: Expiration | null) => Promise<string>
+  approve: (spender: string, tokenId: string, expires?: Expiration) => Promise<string>
   /// Remove previously granted Approval
   revoke: (spender: string, tokenId: string) => Promise<string>
   /// Allows operator to transfer / send any token from the owner's account.
   /// If expiration is set, then this allowance has a time/height limit
-  approveAll: (operator: string, expires: Expiration | null) => Promise<string>
+  approveAll: (operator: string, expires?: Expiration) => Promise<string>
   /// Remove previously granted ApproveAll permission
   revokeAll: (operator: string) => Promise<string>
   /// Mint a new NFT, can only be called by the contract minter
-  mint: (msg: string) => Promise<string> //MintMsg<T>
+  mint: (tokenId: string, owner: string, tokenURI?: string) => Promise<string> //MintMsg<T>
 
   /// Burn an NFT the sender has access to
   burn: (tokenId: string) => Promise<string>
+}
+
+export interface Sg721Messages {
+  transferNft: (recipient: string, tokenId: string) => TransferNFTMessage
+  sendNft: (contract: string, tokenId: string, msg: Record<string, unknown>) => SendNFTMessage
+  approve: (recipient: string, tokenId: string, expires?: Expiration) => ApproveMessage
+  revoke: (recipient: string, tokenId: string) => RevokeMessage
+  approveAll: (operator: string, expires?: Expiration) => ApproveAllMessage
+  revokeAll: (operator: string) => RevokeAllMessage
+  mint: (tokenId: string, owner: string, tokenURI?: string) => MintMessage
+  burn: (tokenId: string) => BurnMessage
+}
+
+export interface TransferNFTMessage {
+  sender: string
+  contract: string
+  msg: {
+    transfer_nft: {
+      recipient: string
+      token_id: string
+    }
+  }
+  funds: Coin[]
+}
+
+export interface SendNFTMessage {
+  sender: string
+  contract: string
+  msg: {
+    send_nft: {
+      contract: string
+      token_id: string
+      msg: Record<string, unknown>
+    }
+  }
+  funds: Coin[]
+}
+
+export interface ApproveMessage {
+  sender: string
+  contract: string
+  msg: {
+    approve: {
+      spender: string
+      token_id: string
+      expires?: Expiration
+    }
+  }
+  funds: Coin[]
+}
+
+export interface RevokeMessage {
+  sender: string
+  contract: string
+
+  msg: {
+    revoke: {
+      spender: string
+      token_id: string
+    }
+  }
+  funds: Coin[]
+}
+
+export interface ApproveAllMessage {
+  sender: string
+  contract: string
+  msg: {
+    approve_all: {
+      operator: string
+      expires?: Expiration
+    }
+  }
+  funds: Coin[]
+}
+
+export interface RevokeAllMessage {
+  sender: string
+  contract: string
+  msg: {
+    revoke_all: {
+      operator: string
+    }
+  }
+  funds: Coin[]
+}
+
+export interface MintMessage {
+  sender: string
+  contract: string
+  msg: {
+    mint: {
+      token_id: string
+      owner: string
+      token_uri?: string
+    }
+  }
+  funds: Coin[]
+}
+
+export interface BurnMessage {
+  sender: string
+  contract: string
+  msg: {
+    burn: {
+      token_id: string
+    }
+  }
+  funds: Coin[]
 }
 
 export interface SG721Contract {
@@ -77,11 +188,15 @@ export interface SG721Contract {
   ) => Promise<InstantiateResponse>
 
   use: (contractAddress: string) => SG721Instance
+
+  messages: (contractAddress: string) => Sg721Messages
 }
 
 export const SG721 = (client: SigningCosmWasmClient, txSigner: string): SG721Contract => {
   const use = (contractAddress: string): SG721Instance => {
-    const encode = (str: string): string => Buffer.from(str, 'binary').toString('base64')
+    const jsonToBinary = (json: Record<string, unknown>): string => {
+      return toBase64(toUtf8(JSON.stringify(json)))
+    }
 
     const ownerOf = async (tokenId: string, includeExpired?: boolean | null): Promise<any> => {
       const res = await client.queryContractSmart(contractAddress, {
@@ -190,13 +305,13 @@ export const SG721 = (client: SigningCosmWasmClient, txSigner: string): SG721Con
     const sendNft = async (
       contract: string,
       tokenId: string,
-      msg: string, //Binary
+      msg: Record<string, unknown>, //Binary
     ): Promise<string> => {
       const res = await client.execute(
         txSigner,
         contractAddress,
         {
-          send_nft: { contract, token_id: tokenId, msg: encode(msg) },
+          send_nft: { contract, token_id: tokenId, msg: jsonToBinary(msg) },
         },
         'auto',
         '',
@@ -205,7 +320,7 @@ export const SG721 = (client: SigningCosmWasmClient, txSigner: string): SG721Con
       return res.transactionHash
     }
 
-    const approve = async (spender: string, tokenId: string, expires: Expiration | null): Promise<string> => {
+    const approve = async (spender: string, tokenId: string, expires?: Expiration): Promise<string> => {
       const res = await client.execute(
         txSigner,
         contractAddress,
@@ -233,7 +348,7 @@ export const SG721 = (client: SigningCosmWasmClient, txSigner: string): SG721Con
       return res.transactionHash
     }
 
-    const approveAll = async (operator: string, expires: Expiration | null): Promise<string> => {
+    const approveAll = async (operator: string, expires?: Expiration): Promise<string> => {
       const res = await client.execute(
         txSigner,
         contractAddress,
@@ -261,12 +376,16 @@ export const SG721 = (client: SigningCosmWasmClient, txSigner: string): SG721Con
       return res.transactionHash
     }
 
-    const mint = async (msg: string): Promise<string> => {
+    const mint = async (tokenId: string, owner: string, tokenURI?: string): Promise<string> => {
       const res = await client.execute(
         txSigner,
         contractAddress,
         {
-          mint: { msg },
+          mint: {
+            token_id: tokenId,
+            owner,
+            token_uri: tokenURI,
+          },
         },
         'auto',
         '',
@@ -332,5 +451,131 @@ export const SG721 = (client: SigningCosmWasmClient, txSigner: string): SG721Con
     }
   }
 
-  return { use, instantiate }
+  const messages = (contractAddress: string) => {
+    const transferNft = (recipient: string, tokenId: string) => {
+      return {
+        sender: txSigner,
+        contract: contractAddress,
+        msg: {
+          transfer_nft: {
+            recipient,
+            token_id: tokenId,
+          },
+        },
+        funds: [],
+      }
+    }
+
+    const sendNft = (contract: string, tokenId: string, msg: Record<string, unknown>) => {
+      return {
+        sender: txSigner,
+        contract: contractAddress,
+        msg: {
+          send_nft: {
+            contract,
+            token_id: tokenId,
+            msg,
+          },
+        },
+        funds: [],
+      }
+    }
+
+    const approve = (spender: string, tokenId: string, expires?: Expiration) => {
+      return {
+        sender: txSigner,
+        contract: contractAddress,
+        msg: {
+          approve: {
+            spender,
+            token_id: tokenId,
+            expires,
+          },
+        },
+        funds: [],
+      }
+    }
+
+    const revoke = (spender: string, tokenId: string) => {
+      return {
+        sender: txSigner,
+        contract: contractAddress,
+        msg: {
+          revoke: {
+            spender,
+            token_id: tokenId,
+          },
+        },
+        funds: [],
+      }
+    }
+
+    const approveAll = (operator: string, expires?: Expiration) => {
+      return {
+        sender: txSigner,
+        contract: contractAddress,
+        msg: {
+          approve_all: {
+            operator,
+            expires,
+          },
+        },
+        funds: [],
+      }
+    }
+
+    const revokeAll = (operator: string) => {
+      return {
+        sender: txSigner,
+        contract: contractAddress,
+        msg: {
+          revoke_all: {
+            operator,
+          },
+        },
+        funds: [],
+      }
+    }
+
+    const mint = (tokenId: string, owner: string, tokenURI?: string) => {
+      return {
+        sender: txSigner,
+        contract: contractAddress,
+        msg: {
+          mint: {
+            token_id: tokenId,
+            owner,
+            token_uri: tokenURI,
+          },
+        },
+        funds: [],
+      }
+    }
+
+    const burn = (tokenId: string) => {
+      return {
+        sender: txSigner,
+        contract: contractAddress,
+        msg: {
+          burn: {
+            token_id: tokenId,
+          },
+        },
+        funds: [],
+      }
+    }
+
+    return {
+      transferNft,
+      sendNft,
+      approve,
+      revoke,
+      approveAll,
+      revokeAll,
+      mint,
+      burn,
+    }
+  }
+
+  return { use, instantiate, messages }
 }
