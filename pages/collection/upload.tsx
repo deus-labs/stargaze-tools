@@ -21,6 +21,10 @@ interface ImagePreview{
   dataURL: string;
 }
 
+let imageFilesArray: File[] = [];
+let metadataFilesArray: File[] = [];
+let updatedMetadataFilesArray: File[] = [];
+
 const UploadPage: NextPage = () => {
   const wallet = useWallet()
   
@@ -29,9 +33,7 @@ const UploadPage: NextPage = () => {
   const [baseImageURI, setBaseImageURI] = useState('')
   const [uploadMethod, setUploadMethod] = useState('New')
 
-  let imageFilesArray: File[] = []
-  let metadataFilesArray: File[] = []
-  let updatedMetadataFilesArray: File[] = []
+  const [imagePreviewArray, setImagePreviewArray] = useState<ImagePreview[]>([])
 
   const imageFilesRef = useRef<HTMLInputElement>(null)
   const metadataFilesRef = useRef<HTMLInputElement>(null)
@@ -51,10 +53,11 @@ const UploadPage: NextPage = () => {
   }) => {
     setImage(event.target.value.toString())
   }
-  const [previewArray, setPreviewArray] = useState<ImagePreview[]>([])
-  const previewImages = (event: ChangeEvent<HTMLInputElement>
+
+  const selectImages = (event: ChangeEvent<HTMLInputElement>
   ) => {
-      setPreviewArray([])
+      imageFilesArray = []
+      setImagePreviewArray([])
       console.log(event.target.files)
       let reader: FileReader;
       if (event.target.files === null)
@@ -69,77 +72,49 @@ const UploadPage: NextPage = () => {
             event.target.files[i].name,
             { type: 'image/jpg' }
           )
-          setPreviewArray((prev) => [...prev, {name: imageFile.name, dataURL: URL.createObjectURL(imageFile)}])
+          imageFilesArray.push(imageFile)
+          setImagePreviewArray((prev) => [...prev, {name: imageFile.name, dataURL: URL.createObjectURL(imageFile)}])
         }
         if (!event.target.files) return toast.error('No file selected.')
         reader.readAsArrayBuffer(event.target.files[i]);
         reader.onloadend = function(e){
-          setPreviewArray((prev) => prev.sort((a, b) => naturalCompare(a.name, b.name)))
+          imageFilesArray.sort((a, b) => naturalCompare(a.name, b.name))
+          setImagePreviewArray(imageFilesArray.map((file) => { return {name: file.name, dataURL: URL.createObjectURL(file)} }))
+          console.log(imageFilesArray)
         }
       }
   }
   
-
-  const selectImages = async () => {
-    imageFilesArray = []
-    let reader: FileReader
-    if (!imageFilesRef.current?.files) return toast.error('No files selected.')
-    for (let i = 0; i < imageFilesRef.current.files.length; i++) {
-      reader = new FileReader()
-      reader.onload = function (e) {
-        if (!e.target?.result) return toast.error('Error parsing file.')
-        if (!imageFilesRef.current?.files)
-          return toast.error('No files selected.')
-        let imageFile = new File(
-          [e.target.result],
-          imageFilesRef.current.files[i].name,
-          { type: 'image/jpg' }
-        )
-        imageFilesArray.push(imageFile)
-        if (i === imageFilesRef.current.files.length - 1) {
-          imageFilesArray.sort((a, b) => naturalCompare(a.name, b.name))
-          console.log(imageFilesArray)
-          selectMetadata()
-        }
-      }
-      if (!imageFilesRef.current.files) return toast.error('No file selected.')
-      reader.readAsArrayBuffer(imageFilesRef.current.files[i])
-      // reader.onloadend = function (e) {
-      // }
-    }
-  }
-  const selectMetadata = async () => {
+  const selectMetadata = (event: ChangeEvent<HTMLInputElement>) => {
     metadataFilesArray = []
-
+    console.log(imageFilesArray)
+    console.log(event.target.files)
     let reader: FileReader
-    if (!metadataFilesRef.current?.files)
-      return toast.error('No files selected.')
-    for (let i = 0; i < metadataFilesRef.current.files.length; i++) {
+    if (event.target.files === null)
+       return toast.error('No files selected.')
+    for (let i = 0; i < event.target.files?.length; i++) {
       reader = new FileReader()
       reader.onload = function (e) {
         if (!e.target?.result) return toast.error('Error parsing file.')
-        if (!metadataFilesRef.current?.files)
+        if (!event.target.files)
           return toast.error('No files selected.')
         let metadataFile = new File(
           [e.target.result],
-          metadataFilesRef.current.files[i].name,
+            event.target.files[i].name,
           { type: 'image/jpg' }
         )
         metadataFilesArray.push(metadataFile)
-        if (i === metadataFilesRef.current.files.length - 1) {
-          metadataFilesArray.sort((a, b) => naturalCompare(a.name, b.name))
-          console.log(metadataFilesArray)
-          updateMetadata()
-        }
-
       }
-      if (!metadataFilesRef.current?.files)
-        return toast.error('No file selected.')
-      reader.readAsText(metadataFilesRef.current.files[i], 'utf8')
-      //reader.onloadend = function (e) { ...
+      if (!event.target.files) return toast.error('No file selected.')
+      reader.readAsText(event.target.files[i], 'utf8')
+      reader.onloadend = function(e){
+        metadataFilesArray.sort((a, b) => naturalCompare(a.name, b.name))
+        console.log(metadataFilesArray)
+      }
     }
   }
   const updateMetadata = async () => {
+    console.log(imageFilesArray)
     const imageURI = await client.storeDirectory(imageFilesArray)
     console.log(imageURI)
     updatedMetadataFilesArray = []
@@ -301,7 +276,7 @@ const UploadPage: NextPage = () => {
                     'file:py-2 file:px-4 file:mr-4 file:bg-plumbus-light file:rounded file:border-0 cursor-pointer',
                     'before:absolute before:inset-0 before:hover:bg-white/5 before:transition'
                   )}
-                  onChange={previewImages}
+                  onChange={selectImages}
                   ref={imageFilesRef}
                   type="file"
                   multiple
@@ -324,7 +299,7 @@ const UploadPage: NextPage = () => {
                     'file:py-2 file:px-4 file:mr-4 file:bg-plumbus-light file:rounded file:border-0 cursor-pointer',
                     'before:absolute before:inset-0 before:hover:bg-white/5 before:transition'
                   )}
-                  onChange={() => { }}
+                  onChange={selectMetadata}
                   ref={metadataFilesRef}
                   type="file"
                   multiple
@@ -333,7 +308,7 @@ const UploadPage: NextPage = () => {
 
               <div className="mt-5 ml-8">
                 <Button
-                  onClick={selectImages}
+                  onClick={updateMetadata}
                   variant="solid"
                   isWide
                   className="w-[120px]"
@@ -354,15 +329,15 @@ const UploadPage: NextPage = () => {
           
 
           <div className="ml-20 mr-10 mt-2 w-4/5 h-96 carousel carousel-vertical rounded-box border-dashed border-2">
-            {previewArray.length > 0 && (previewArray.map((imageSource, index) => (
+            {imagePreviewArray.length > 0 && (imagePreviewArray.map((imageSource, index) => (
             <div className="carousel-item w-full h-1/8">
               <div className='grid grid-cols-4 col-auto'>
               <label htmlFor="my-modal-4" className="p-0 w-full h-full relative btn modal-button bg-transparent border-0 hover:bg-transparent">
-                <img key={4*index}  className="my-1 px-1 thumbnail" src={previewArray[4*index]?.dataURL} />
+                <img key={4*index}  className="my-1 px-1 thumbnail" src={imagePreviewArray[4*index]?.dataURL} />
               </label>
-              <img key={4*index+1} className="my-1 px-1 thumbnail" src={previewArray[4*index+1]?.dataURL} />
-              <img key={4*index+2} className="my-1 px-1 thumbnail" src={previewArray[4*index+2]?.dataURL} />
-              <img key={4*index+3} className="my-1 px-1 thumbnail" src={previewArray[4*index+3]?.dataURL} />
+              <img key={4*index+1} className="my-1 px-1 thumbnail" src={imagePreviewArray[4*index+1]?.dataURL} />
+              <img key={4*index+2} className="my-1 px-1 thumbnail" src={imagePreviewArray[4*index+2]?.dataURL} />
+              <img key={4*index+3} className="my-1 px-1 thumbnail" src={imagePreviewArray[4*index+3]?.dataURL} />
               </div>
             </div> )))}
           </div>
