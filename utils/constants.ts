@@ -1,4 +1,4 @@
-export const CW721_BASE_CODE_ID = parseInt(process.env.NEXT_PUBLIC_CW721_BASE_CODE_ID, 10)
+export const SG721_CODE_ID = parseInt(process.env.NEXT_PUBLIC_SG721_CODE_ID, 10)
 
 export const NETWORK = process.env.NEXT_PUBLIC_NETWORK
 

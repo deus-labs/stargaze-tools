@@ -8,23 +8,27 @@ import { useWallet } from 'contexts/wallet'
 import { NextPage } from 'next'
 import { NextSeo } from 'next-seo'
 import { Blob, File, NFTStorage } from 'nft.storage'
-import { useEffect, useRef, useState } from 'react'
+import { ChangeEvent, useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { FaArrowRight } from 'react-icons/fa'
 import { withMetadata } from 'utils/layout'
 import { links } from 'utils/links'
 import { naturalCompare } from 'utils/sort'
+import { UrlInput } from '../../components/forms/FormInput';
+
+interface ImagePreview{
+  name: string,
+  dataURL: string;
+}
 
 const UploadPage: NextPage = () => {
   const wallet = useWallet()
+  
 
   const baseTokenURI = useCollectionStore().base_token_uri
   const [baseImageURI, setBaseImageURI] = useState('')
   const [uploadMethod, setUploadMethod] = useState('New')
 
-  const [imageFiles, setImageFiles] = useState<File[]>([])
-  const [metadataFiles, setMetadataFiles] = useState<File[]>([])
-  const [updatedMetadataFiles, setUpdatedMetadataFiles] = useState<File[]>([])
   let imageFilesArray: File[] = []
   let metadataFilesArray: File[] = []
   let updatedMetadataFilesArray: File[] = []
@@ -47,6 +51,34 @@ const UploadPage: NextPage = () => {
   }) => {
     setImage(event.target.value.toString())
   }
+  const [previewArray, setPreviewArray] = useState<ImagePreview[]>([])
+  const previewImages = (event: ChangeEvent<HTMLInputElement>
+  ) => {
+      setPreviewArray([])
+      console.log(event.target.files)
+      let reader: FileReader;
+      if (event.target.files === null)
+        return;
+      for(let i = 0; i < event.target.files?.length;i++){
+        reader = new FileReader(); 
+        reader.onload = function(e){
+          if (!e.target?.result) return toast.error('Error parsing file.')
+          if (!event.target.files) return toast.error('No files selected.')
+          let imageFile = new File(
+            [e.target.result],
+            event.target.files[i].name,
+            { type: 'image/jpg' }
+          )
+          setPreviewArray((prev) => [...prev, {name: imageFile.name, dataURL: URL.createObjectURL(imageFile)}])
+        }
+        if (!event.target.files) return toast.error('No file selected.')
+        reader.readAsArrayBuffer(event.target.files[i]);
+        reader.onloadend = function(e){
+          setPreviewArray((prev) => prev.sort((a, b) => naturalCompare(a.name, b.name)))
+        }
+      }
+  }
+  
 
   const selectImages = async () => {
     imageFilesArray = []
@@ -72,7 +104,8 @@ const UploadPage: NextPage = () => {
       }
       if (!imageFilesRef.current.files) return toast.error('No file selected.')
       reader.readAsArrayBuffer(imageFilesRef.current.files[i])
-      //reader.onloadend = function (e) { ...
+      // reader.onloadend = function (e) {
+      // }
     }
   }
   const selectMetadata = async () => {
@@ -142,7 +175,7 @@ const UploadPage: NextPage = () => {
   return (
     <div>
       <NextSeo title="Create Collection" />
-
+      
       <div className="space-y-8 mt-5 text-center">
         <h1 className="font-heading text-4xl font-bold">
           Upload Assets & Metadata
@@ -250,62 +283,100 @@ const UploadPage: NextPage = () => {
       )}
       {uploadMethod == 'New' && (
         <div>
-          <label className="block mt-5 mr-1 mb-1 ml-8 w-full font-bold text-white dark:text-gray-300">
-            Image File Selection
-          </label>
-          <div
-            className={clsx(
-              'flex relative justify-center items-center mx-8 mt-2 space-y-4 w-1/2 h-32',
-              'rounded border-2 border-white/20 border-dashed'
-            )}
-          >
-            <input
-              id="imageFiles"
-              accept="image/*"
-              className={clsx(
-                'file:py-2 file:px-4 file:mr-4 file:bg-plumbus-light file:rounded file:border-0 cursor-pointer',
-                'before:absolute before:inset-0 before:hover:bg-white/5 before:transition'
-              )}
-              onChange={() => { }}
-              ref={imageFilesRef}
-              type="file"
-              multiple
-            />
+          <div className= "grid grid-cols-2">
+            <div className='w-full'>
+              <label className="block mt-5 mr-1 mb-1 ml-8 w-full font-bold text-white dark:text-gray-300">
+                Image File Selection
+              </label>
+              <div
+                className={clsx(
+                  'flex relative justify-center items-center mx-8 mt-2 space-y-4 w-full h-32',
+                  'rounded border-2 border-white/20 border-dashed'
+                )}
+              >
+                <input
+                  id="imageFiles"
+                  accept="image/*"
+                  className={clsx(
+                    'file:py-2 file:px-4 file:mr-4 file:bg-plumbus-light file:rounded file:border-0 cursor-pointer',
+                    'before:absolute before:inset-0 before:hover:bg-white/5 before:transition'
+                  )}
+                  onChange={previewImages}
+                  ref={imageFilesRef}
+                  type="file"
+                  multiple
+                />
+              </div>
+
+              <label className="block mt-5 mr-1 mb-1 ml-8 w-full font-bold text-white dark:text-gray-300">
+                Metadata Selection
+              </label>
+              <div
+                className={clsx(
+                  'flex relative justify-center items-center mx-8 mt-2 space-y-4 w-full h-32',
+                  'rounded border-2 border-white/20 border-dashed'
+                )}
+              >
+                <input
+                  id="metadataFiles"
+                  accept=""
+                  className={clsx(
+                    'file:py-2 file:px-4 file:mr-4 file:bg-plumbus-light file:rounded file:border-0 cursor-pointer',
+                    'before:absolute before:inset-0 before:hover:bg-white/5 before:transition'
+                  )}
+                  onChange={() => { }}
+                  ref={metadataFilesRef}
+                  type="file"
+                  multiple
+                />
+              </div>
+
+              <div className="mt-5 ml-8">
+                <Button
+                  onClick={selectImages}
+                  variant="solid"
+                  isWide
+                  className="w-[120px]"
+                >
+                  Upload
+                </Button>
+              </div>
           </div>
 
-          <label className="block mt-5 mr-1 mb-1 ml-8 w-full font-bold text-white dark:text-gray-300">
-            Metadata Selection
+          <input type="checkbox" id="my-modal-4" className="modal-toggle" />
+          <label htmlFor="my-modal-4" className="modal cursor-pointer">
+            <label className="modal-box absolute top-5 h-3/4" htmlFor="">
+              <h3 className="text-lg font-bold">Metadata</h3>
+              <p className="pt-4 font-bold">Description: </p>
+              <input type={'text'} className="pt-2 rounded w-3/4"/>
+            </label>
           </label>
-          <div
-            className={clsx(
-              'flex relative justify-center items-center mx-8 mt-2 space-y-4 w-1/2 h-32',
-              'rounded border-2 border-white/20 border-dashed'
-            )}
-          >
-            <input
-              id="metadataFiles"
-              accept=""
-              className={clsx(
-                'file:py-2 file:px-4 file:mr-4 file:bg-plumbus-light file:rounded file:border-0 cursor-pointer',
-                'before:absolute before:inset-0 before:hover:bg-white/5 before:transition'
-              )}
-              onChange={() => { }}
-              ref={metadataFilesRef}
-              type="file"
-              multiple
-            />
-          </div>
+          
 
-          <div className="mt-5 ml-8">
-            <Button
-              onClick={selectImages}
-              variant="solid"
-              isWide
-              className="w-[120px]"
-            >
-              Upload
-            </Button>
+          <div className="ml-20 mr-10 mt-2 w-4/5 h-96 carousel carousel-vertical rounded-box border-dashed border-2">
+            {previewArray.length > 0 && (previewArray.map((imageSource, index) => (
+            <div className="carousel-item w-full h-1/8">
+              <div className='grid grid-cols-4 col-auto'>
+              <label htmlFor="my-modal-4" className="p-0 w-full h-full relative btn modal-button bg-transparent border-0 hover:bg-transparent">
+                <img key={4*index}  className="my-1 px-1 thumbnail" src={previewArray[4*index]?.dataURL} />
+              </label>
+              <img key={4*index+1} className="my-1 px-1 thumbnail" src={previewArray[4*index+1]?.dataURL} />
+              <img key={4*index+2} className="my-1 px-1 thumbnail" src={previewArray[4*index+2]?.dataURL} />
+              <img key={4*index+3} className="my-1 px-1 thumbnail" src={previewArray[4*index+3]?.dataURL} />
+              </div>
+            </div> )))}
           </div>
+          </div> 
+         
+
+
+          {/* <div className={`grid grid-cols-12 col-auto`}>
+          {previewURI.length > 0 && (previewURI.map((imageSource, index) => (
+            <img key={index} className="ml-8 mt-2 thumbnail" src={imageSource.toString()}></img>
+          )))}
+          </div> */}
+
+          
         </div>
       )}
     </div>
