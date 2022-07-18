@@ -1,7 +1,6 @@
-import { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate'
-import { Coin } from '@cosmjs/proto-signing'
-
-type Expiration = { at_height: number } | { at_time: string } | { never: {} }
+import type { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate'
+import type { Coin } from '@cosmjs/proto-signing'
+import { coin } from '@cosmjs/proto-signing'
 
 export interface InstantiateResponse {
   readonly contractAddress: string
@@ -30,32 +29,25 @@ export interface WhiteListInstance {
   //Execute
   updateStartTime: (startTime: string) => Promise<string>
   updateEndTime: (endTime: string) => Promise<string>
-  addMembers: (to_add: string[]) => Promise<string>
-  removeMembers: (to_remove: string[]) => Promise<string>
+  addMembers: (memberList: string[]) => Promise<string>
+  removeMembers: (memberList: string[]) => Promise<string>
   updatePerAddressLimit: (limit: number) => Promise<string>
   increaseMemberLimit: (limit: number) => Promise<string>
 }
 
 export interface WhiteListContract {
   instantiate: (
-    senderAddress: string,
     codeId: number,
     initMsg: Record<string, unknown>,
     label: string,
     admin?: string,
-    funds?: Coin[]
   ) => Promise<InstantiateResponse>
 
   use: (contractAddress: string) => WhiteListInstance
 }
 
-export const WhiteList = (
-  client: SigningCosmWasmClient,
-  senderAddress: string
-): WhiteListContract => {
+export const WhiteList = (client: SigningCosmWasmClient, txSigner: string): WhiteListContract => {
   const use = (contractAddress: string): WhiteListInstance => {
-    console.log(client, 'client')
-    console.log(senderAddress, 'senderAddress')
     ///QUERY START
     const hasStarted = async (): Promise<boolean> => {
       return client.queryContractSmart(contractAddress, { has_started: {} })
@@ -69,10 +61,7 @@ export const WhiteList = (
       return client.queryContractSmart(contractAddress, { is_active: {} })
     }
 
-    const members = async (
-      limit: number,
-      startAfter?: string
-    ): Promise<string[]> => {
+    const members = async (limit: number, startAfter?: string): Promise<string[]> => {
       return client.queryContractSmart(contractAddress, {
         members: { limit, start_after: startAfter },
       })
@@ -92,63 +81,32 @@ export const WhiteList = (
     /// QUERY END
     /// EXECUTE START
     const updateStartTime = async (startTime: string): Promise<string> => {
-      const res = await client.execute(
-        senderAddress,
-        contractAddress,
-        { update_start_time: startTime },
-        'auto',
-        'memo'
-      )
+      const res = await client.execute(txSigner, contractAddress, { update_start_time: startTime }, 'auto', 'memo')
       return res.transactionHash
     }
 
     const updateEndTime = async (endTime: string): Promise<string> => {
-      const res = await client.execute(
-        senderAddress,
-        contractAddress,
-        { update_end_time: endTime },
-        'auto'
-      )
+      const res = await client.execute(txSigner, contractAddress, { update_end_time: endTime }, 'auto')
       return res.transactionHash
     }
 
-    const addMembers = async (to_add: string[]): Promise<string> => {
-      const res = await client.execute(
-        senderAddress,
-        contractAddress,
-        { add_members: to_add },
-        'auto'
-      )
+    const addMembers = async (memberList: string[]): Promise<string> => {
+      const res = await client.execute(txSigner, contractAddress, { add_members: memberList }, 'auto')
       return res.transactionHash
     }
 
-    const removeMembers = async (to_remove: string[]): Promise<string> => {
-      const res = await client.execute(
-        senderAddress,
-        contractAddress,
-        { remove_members: to_remove },
-        'auto'
-      )
+    const removeMembers = async (memberList: string[]): Promise<string> => {
+      const res = await client.execute(txSigner, contractAddress, { remove_members: memberList }, 'auto')
       return res.transactionHash
     }
 
     const updatePerAddressLimit = async (limit: number): Promise<string> => {
-      const res = await client.execute(
-        senderAddress,
-        contractAddress,
-        { update_per_address_limit: limit },
-        'auto'
-      )
+      const res = await client.execute(txSigner, contractAddress, { update_per_address_limit: limit }, 'auto')
       return res.transactionHash
     }
 
     const increaseMemberLimit = async (limit: number): Promise<string> => {
-      const res = await client.execute(
-        senderAddress,
-        contractAddress,
-        { increase_member_limit: limit },
-        'auto'
-      )
+      const res = await client.execute(txSigner, contractAddress, { increase_member_limit: limit }, 'auto')
       return res.transactionHash
     }
     /// EXECUTE END
@@ -171,25 +129,15 @@ export const WhiteList = (
   }
 
   const instantiate = async (
-    senderAddress: string,
     codeId: number,
     initMsg: Record<string, unknown>,
     label: string,
     admin?: string,
-    funds?: Coin[]
   ): Promise<InstantiateResponse> => {
-    console.log('Funds:' + funds)
-    const result = await client.instantiate(
-      senderAddress,
-      codeId,
-      initMsg,
-      label,
-      'auto',
-      {
-        funds,
-        admin,
-      }
-    )
+    const result = await client.instantiate(txSigner, codeId, initMsg, label, 'auto', {
+      funds: [coin('100000000', 'ustars')],
+      admin,
+    })
 
     return {
       contractAddress: result.contractAddress,

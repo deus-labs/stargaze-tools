@@ -1,11 +1,15 @@
+import { coin } from '@cosmjs/proto-signing'
 import { Alert } from 'components/Alert'
 import { Button } from 'components/Button'
 import { Conditional } from 'components/Conditional'
 import { ContractPageHeader } from 'components/ContractPageHeader'
+import { FormControl } from 'components/FormControl'
 import { FormGroup } from 'components/FormGroup'
-import { NumberInput, TextInput } from 'components/forms/FormInput'
-import { useInputState, useNumberInputState } from 'components/forms/FormInput.hooks'
-import { FormTextArea } from 'components/forms/FormTextArea'
+import { AddressList } from 'components/forms/AddressList'
+import { useAddressListState } from 'components/forms/AddressList.hooks'
+import { NumberInput } from 'components/forms/FormInput'
+import { useNumberInputState } from 'components/forms/FormInput.hooks'
+import { InputDateTime } from 'components/InputDateTime'
 import { JsonPreview } from 'components/JsonPreview'
 import { LinkTabs } from 'components/LinkTabs'
 import { whitelistLinkTabs } from 'components/LinkTabs.data'
@@ -14,86 +18,45 @@ import { useWallet } from 'contexts/wallet'
 import type { InstantiateResponse } from 'contracts/sg721'
 import type { NextPage } from 'next'
 import { NextSeo } from 'next-seo'
-import type { FormEvent } from 'react'
+import { type FormEvent, useState } from 'react'
 import { toast } from 'react-hot-toast'
 import { FaAsterisk } from 'react-icons/fa'
 import { useMutation } from 'react-query'
-import { SG721_CODE_ID } from 'utils/constants'
+import { WHITELIST_CODE_ID } from 'utils/constants'
 import { withMetadata } from 'utils/layout'
 import { links } from 'utils/links'
 
 const Sg721InstantiatePage: NextPage = () => {
   const wallet = useWallet()
-  const contract = useContracts().sg721
+  const { whitelist: contract } = useContracts()
 
-  const nameState = useInputState({
-    id: 'name',
-    name: 'name',
-    title: 'Name',
-    placeholder: 'My Awesome SG721 Contract',
-    subtitle: 'Name of the sg721 contract',
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined)
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined)
+
+  const addressListState = useAddressListState()
+
+  const unitPriceState = useNumberInputState({
+    id: 'unit-price',
+    name: 'unitPrice',
+    title: 'Unit Price',
+    subtitle: 'Price of each tokens in collection',
+    placeholder: '500',
   })
 
-  const symbolState = useInputState({
-    id: 'symbol',
-    name: 'symbol',
-    title: 'Symbol',
-    placeholder: 'AWSM',
-    subtitle: 'Symbol of the sg721 contract',
+  const memberLimitState = useNumberInputState({
+    id: 'member-limit',
+    name: 'memberLimit',
+    title: 'Member Limit',
+    subtitle: 'Limit of the whitelisted members',
+    placeholder: '1000',
   })
 
-  const minterState = useInputState({
-    id: 'minter-address',
-    name: 'minterAddress',
-    title: 'Minter Address',
-    placeholder: 'stars1234567890abcdefghijklmnopqrstuvwxyz...',
-    subtitle: 'Address that has the permissions to mint on sg721 contract',
-  })
-
-  const creatorState = useInputState({
-    id: 'creator-address',
-    name: 'creatorAddress',
-    title: 'Creator Address',
-    placeholder: 'stars1234567890abcdefghijklmnopqrstuvwxyz...',
-    subtitle: 'Address of the collection creator',
-  })
-
-  const descriptionState = useInputState({
-    id: 'description',
-    name: 'description',
-    title: 'Description',
-    subtitle: 'Description of the collection',
-  })
-
-  const imageState = useInputState({
-    id: 'image',
-    name: 'image',
-    title: 'Image',
-    subtitle: 'Image of the collection',
-    placeholder: 'ipfs://bafybe....',
-  })
-
-  const externalLinkState = useInputState({
-    id: 'external-link',
-    name: 'externalLink',
-    title: 'External Link',
-    subtitle: 'External link to the collection',
-  })
-
-  const royaltyPaymentAddressState = useInputState({
-    id: 'royalty-payment-address',
-    name: 'royaltyPaymentAddress',
-    title: 'Payment Address',
-    subtitle: 'Address to receive royalties',
-    placeholder: 'stars1234567890abcdefghijklmnopqrstuvwxyz...',
-  })
-
-  const royaltyShareState = useNumberInputState({
-    id: 'royalty-share',
-    name: 'royaltyShare',
-    title: 'Share Percentage',
-    subtitle: 'Percentage of royalties to be paid',
-    placeholder: '8',
+  const perAddressLimitState = useNumberInputState({
+    id: 'per-address-limit',
+    name: 'perAddressLimit',
+    title: 'Per Address Limit',
+    subtitle: 'Limit of tokens per address',
+    placeholder: '5',
   })
 
   const { data, isLoading, mutate } = useMutation(
@@ -103,31 +66,29 @@ const Sg721InstantiatePage: NextPage = () => {
         throw new Error('Smart contract connection failed')
       }
 
-      let royaltyInfo = null
-      if (royaltyPaymentAddressState.value && royaltyShareState.value) {
-        royaltyInfo = {
-          paymentAddress: royaltyPaymentAddressState.value,
-          share: royaltyShareState.value,
-        }
+      if (!startDate) {
+        throw new Error('Start date is required')
+      }
+      if (!endDate) {
+        throw new Error('End date is required')
       }
 
       const msg = {
-        name: nameState.value,
-        symbol: symbolState.value,
-        minter: minterState.value,
-        collection_info: {
-          creator: creatorState.value,
-          description: descriptionState.value,
-          image: imageState.value,
-          external_link: externalLinkState.value || null,
-          royalty_info: royaltyInfo,
-        },
+        members: addressListState.values.map((a) => a.address),
+        start_time: (startDate.getTime() * 1_000_000).toString(),
+        end_time: (endDate.getTime() * 1_000_000).toString(),
+        unit_price: coin(String(Number(unitPriceState.value) * 1000000), 'ustars'),
+        per_address_limit: perAddressLimitState.value,
+        member_limit: memberLimitState.value,
       }
-      return toast.promise(contract.instantiate(SG721_CODE_ID, msg, 'Stargaze Sg721 Contract', wallet.address), {
-        loading: 'Instantiating contract...',
-        error: 'Instantiation failed!',
-        success: 'Instantiation success!',
-      })
+      return toast.promise(
+        contract.instantiate(WHITELIST_CODE_ID, msg, 'Stargaze Whitelist Contract', wallet.address),
+        {
+          loading: 'Instantiating contract...',
+          error: 'Instantiation failed!',
+          success: 'Instantiation success!',
+        },
+      )
     },
     {
       onError: (error) => {
@@ -155,22 +116,28 @@ const Sg721InstantiatePage: NextPage = () => {
         <br />
       </Conditional>
 
-      <FormGroup subtitle="Information about your sg721 contract" title="SG721 Contract Details">
-        <TextInput isRequired {...nameState} />
-        <TextInput isRequired {...symbolState} />
-        <TextInput isRequired {...minterState} />
+      <FormGroup subtitle="Information about your whitelisted addresses" title="Whitelist Details">
+        <AddressList
+          entries={addressListState.entries}
+          isRequired
+          onAdd={addressListState.add}
+          onChange={addressListState.update}
+          onRemove={addressListState.remove}
+          subtitle="Enter the members you want in your contract"
+          title="Members"
+        />
       </FormGroup>
 
-      <FormGroup subtitle="Information about your collection" title="Collection Details">
-        <TextInput isRequired {...creatorState} />
-        <FormTextArea isRequired {...descriptionState} />
-        <TextInput isRequired {...imageState} />
-        <TextInput {...externalLinkState} />
-      </FormGroup>
-
-      <FormGroup subtitle="Information about royalty" title="Royalty Details">
-        <TextInput {...royaltyPaymentAddressState} />
-        <NumberInput {...royaltyShareState} />
+      <FormGroup subtitle="Information about your minting settings" title="Minting Details">
+        <NumberInput isRequired {...unitPriceState} />
+        <NumberInput isRequired {...memberLimitState} />
+        <NumberInput isRequired {...perAddressLimitState} />
+        <FormControl htmlId="start-date" isRequired subtitle="Start time for the minting" title="Start Time">
+          <InputDateTime minDate={new Date()} onChange={(date) => setStartDate(date)} value={startDate} />
+        </FormControl>
+        <FormControl htmlId="end-date" isRequired subtitle="End time for the minting" title="End Time">
+          <InputDateTime minDate={new Date()} onChange={(date) => setEndDate(date)} value={endDate} />
+        </FormControl>
       </FormGroup>
 
       <div className="flex items-center p-4">
