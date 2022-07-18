@@ -1,5 +1,5 @@
+import type { Coin } from '@cosmjs/proto-signing'
 import { useWallet } from 'contexts/wallet'
-import type { Coin } from 'cosmwasm'
 import { useCallback, useEffect, useState } from 'react'
 
 import type { SG721Contract, SG721Instance } from './contract'
@@ -34,7 +34,7 @@ export function useSG721Contract(): UseSG721ContractProps {
 
   useEffect(() => {
     if (wallet.initialized) {
-      const contract = initContract(wallet.getClient())
+      const contract = initContract(wallet.getClient(), wallet.address)
       setSG721(contract)
     }
   }, [wallet])

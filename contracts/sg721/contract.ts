@@ -12,34 +12,34 @@ export interface SG721Instance {
   readonly contractAddress: string
 
   // queries
-  getOwnerOf: (tokenId: string, includeExpired: boolean | null) => Promise<any>
+  ownerOf: (tokenId: string, includeExpired?: boolean | null) => Promise<any>
 
-  getApproval: (tokenId: string, spender: string, includeExpired: boolean | null) => Promise<any>
+  approval: (tokenId: string, spender: string, includeExpired?: boolean | null) => Promise<any>
 
-  getApprovals: (tokenId: string, includeExpired: boolean | null) => Promise<any>
+  approvals: (tokenId: string, includeExpired?: boolean | null) => Promise<any>
 
-  getAllOperators: (
+  allOperators: (
     owner: string,
-    includeExpired: boolean | null,
-    startAfter: string | null,
-    limit: number | null,
+    includeExpired?: boolean | null,
+    startAfter?: string | null,
+    limit?: number | null,
   ) => Promise<any>
 
-  getNumTokens: () => Promise<any>
+  numTokens: () => Promise<any>
 
-  getContractInfo: () => Promise<any>
+  contractInfo: () => Promise<any>
 
-  getNftInfo: (tokenId: string) => Promise<any>
+  nftInfo: (tokenId: string) => Promise<any>
 
-  getAllNftInfo: (tokenId: string, includeExpired: boolean | null) => Promise<any>
+  allNftInfo: (tokenId: string, includeExpired?: boolean | null) => Promise<any>
 
-  getTokens: (owner: string, startAfter: string | null, limit: number | null) => Promise<any>
+  tokens: (owner: string, startAfter?: string | null, limit?: number | null) => Promise<any>
 
-  getAllTokens: (startAfter: string | null, limit: number | null) => Promise<any>
+  allTokens: (startAfter?: string | null, limit?: number | null) => Promise<any>
 
-  getMinter: () => Promise<any>
+  minter: () => Promise<any>
 
-  getCollectionInfo: () => Promise<any>
+  collectionInfo: () => Promise<any>
 
   //Execute
   transferNft: (recipient: string, tokenId: string) => Promise<string>
@@ -83,32 +83,32 @@ export const SG721 = (client: SigningCosmWasmClient, txSigner: string): SG721Con
   const use = (contractAddress: string): SG721Instance => {
     const encode = (str: string): string => Buffer.from(str, 'binary').toString('base64')
 
-    const getOwnerOf = async (tokenId: string, includeExpired: boolean | null): Promise<any> => {
+    const ownerOf = async (tokenId: string, includeExpired?: boolean | null): Promise<any> => {
       const res = await client.queryContractSmart(contractAddress, {
         owner_of: { token_id: tokenId, include_expired: includeExpired },
       })
       return res
     }
 
-    const getApproval = async (tokenId: string, spender: string, includeExpired: boolean | null): Promise<any> => {
+    const approval = async (tokenId: string, spender: string, includeExpired?: boolean | null): Promise<any> => {
       const res = await client.queryContractSmart(contractAddress, {
         approval: { token_id: tokenId, spender, include_expired: includeExpired },
       })
       return res
     }
 
-    const getApprovals = async (tokenId: string, includeExpired: boolean | null): Promise<any> => {
+    const approvals = async (tokenId: string, includeExpired?: boolean | null): Promise<any> => {
       const res = await client.queryContractSmart(contractAddress, {
         approvals: { token_id: tokenId, include_expired: includeExpired },
       })
       return res
     }
 
-    const getAllOperators = async (
+    const allOperators = async (
       owner: string,
-      includeExpired: boolean | null,
-      startAfter: string | null,
-      limit: number | null,
+      includeExpired?: boolean | null,
+      startAfter?: string | null,
+      limit?: number | null,
     ): Promise<any> => {
       const res = await client.queryContractSmart(contractAddress, {
         all_operators: { owner, include_expired: includeExpired, start_after: startAfter, limit },
@@ -116,56 +116,56 @@ export const SG721 = (client: SigningCosmWasmClient, txSigner: string): SG721Con
       return res
     }
 
-    const getNumTokens = async (): Promise<any> => {
+    const numTokens = async (): Promise<any> => {
       const res = await client.queryContractSmart(contractAddress, {
         num_tokens: {},
       })
       return res
     }
 
-    const getContractInfo = async (): Promise<any> => {
+    const contractInfo = async (): Promise<any> => {
       const res = await client.queryContractSmart(contractAddress, {
         contract_info: {},
       })
       return res
     }
 
-    const getNftInfo = async (tokenId: string): Promise<any> => {
+    const nftInfo = async (tokenId: string): Promise<any> => {
       const res = await client.queryContractSmart(contractAddress, {
         nft_info: { token_id: tokenId },
       })
       return res
     }
 
-    const getAllNftInfo = async (tokenId: string, includeExpired: boolean | null): Promise<any> => {
+    const allNftInfo = async (tokenId: string, includeExpired?: boolean | null): Promise<any> => {
       const res = await client.queryContractSmart(contractAddress, {
         all_nft_info: { token_id: tokenId, include_expired: includeExpired },
       })
       return res
     }
 
-    const getTokens = async (owner: string, startAfter: string | null, limit: number | null): Promise<any> => {
+    const tokens = async (owner: string, startAfter?: string | null, limit?: number | null): Promise<any> => {
       const res = await client.queryContractSmart(contractAddress, {
         tokens: { owner, start_after: startAfter, limit },
       })
       return res
     }
 
-    const getAllTokens = async (startAfter: string | null, limit: number | null): Promise<any> => {
+    const allTokens = async (startAfter?: string | null, limit?: number | null): Promise<any> => {
       const res = await client.queryContractSmart(contractAddress, {
         all_tokens: { start_after: startAfter, limit },
       })
       return res
     }
 
-    const getMinter = async (): Promise<any> => {
+    const minter = async (): Promise<any> => {
       const res = await client.queryContractSmart(contractAddress, {
         minter: {},
       })
       return res
     }
 
-    const getCollectionInfo = async (): Promise<any> => {
+    const collectionInfo = async (): Promise<any> => {
       const res = await client.queryContractSmart(contractAddress, {
         collection_info: {},
       })
@@ -291,18 +291,18 @@ export const SG721 = (client: SigningCosmWasmClient, txSigner: string): SG721Con
 
     return {
       contractAddress,
-      getOwnerOf,
-      getApproval,
-      getApprovals,
-      getAllOperators,
-      getNumTokens,
-      getContractInfo,
-      getNftInfo,
-      getAllNftInfo,
-      getTokens,
-      getAllTokens,
-      getMinter,
-      getCollectionInfo,
+      ownerOf,
+      approval,
+      approvals,
+      allOperators,
+      numTokens,
+      contractInfo,
+      nftInfo,
+      allNftInfo,
+      tokens,
+      allTokens,
+      minter,
+      collectionInfo,
       transferNft,
       sendNft,
       approve,
