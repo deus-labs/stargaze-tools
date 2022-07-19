@@ -12,6 +12,8 @@ const UploadPage: NextPage = () => {
   const wallet = useWallet()
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
+  const [image, setimage] = useState('')
+  const [externalImage, setExternalImage] = useState('')
   const [unitPrice, setUnitPrice] = useState(50)
   const [numTokens, setNumTokens] = useState(1)
   const [perAddressLimit, setPerAddressLimit] = useState(1)
@@ -37,6 +39,14 @@ const UploadPage: NextPage = () => {
 
   const handleChangeDescripion = (event: { target: { value: React.SetStateAction<string> } }) => {
     setDescription(event.target.value.toString())
+  }
+
+  const handleChangeImage = (event: { target: { value: React.SetStateAction<string> } }) => {
+    setimage(event.target.value.toString())
+  }
+
+  const handleChangeExternalImage = (event: { target: { value: React.SetStateAction<string> } }) => {
+    setExternalImage(event.target.value.toString())
   }
 
   const handleChangeUnitPrice = (event: { target: { value: React.SetStateAction<string> } }) => {
@@ -79,7 +89,7 @@ const UploadPage: NextPage = () => {
       <NextSeo title="Create Collection" />
 
       <div className="mt-5 space-y-8 text-center">
-        <h1 className="font-heading text-4xl font-bold">Upload Assets & Metadata</h1>
+        <h1 className="font-heading text-4xl font-bold">Create Collection</h1>
 
         <p>
           Make sure you check our{' '}
@@ -114,6 +124,28 @@ const UploadPage: NextPage = () => {
           id="description"
           onChange={handleChangeDescripion}
           placeholder="An awesome NFT series"
+        />
+        <label className="block mt-3 mb-1 w-2/3 font-bold text-white dark:text-gray-300" htmlFor="image">
+          Image
+        </label>
+        <input
+          className="py-2 px-1 mt-2 mb-2 w-2/3 bg-white/10 rounded border-2 border-white/20 focus:ring
+        focus:ring-plumbus-20
+        form-input, placeholder:text-white/50,"
+          id="image"
+          onChange={handleChangeImage}
+          placeholder=""
+        />
+        <label className="block mt-3 mb-1 w-2/3 font-bold text-white dark:text-gray-300" htmlFor="externalimage">
+          External Image
+        </label>
+        <input
+          className="py-2 px-1 mt-2 mb-2 w-2/3 bg-white/10 rounded border-2 border-white/20 focus:ring
+        focus:ring-plumbus-20
+        form-input, placeholder:text-white/50,"
+          id="externalimage"
+          onChange={handleChangeExternalImage}
+          placeholder=""
         />
         <label className="block mt-3 mb-1 w-2/3 font-bold text-white dark:text-gray-300" htmlFor="numberoftokens">
           Number of Tokens
