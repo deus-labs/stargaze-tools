@@ -145,8 +145,9 @@ const UploadPage: NextPage = () => {
   }
 
   const parseMetadata = async (index: number) => {
-    setParsedMetadata(JSON.parse(await metadataFilesArray[index].text()))
+    setParsedMetadata(await metadataFilesArray[index]?.text())
   }
+
 
   return (
     <div>
@@ -323,23 +324,37 @@ const UploadPage: NextPage = () => {
           <label htmlFor="my-modal-4" className="modal cursor-pointer">
             <label className="modal-box absolute top-5 h-3/4" htmlFor="">
               <h3 className="text-lg font-bold">Metadata</h3>
-              <p className="pt-4 font-bold">Description: {}</p>
+              <p className="pt-4 font-bold">{parsedMetadata}</p>
               <input type={'text'} className="pt-2 rounded w-3/4"/>
-              <p className="pt-4 font-bold">{metadataFilesArray[0]?.name}</p>
+              <p className="pt-4 font-bold">{}</p>
             </label>
           </label>
           
 
           <div className="ml-20 mr-10 mt-2 w-4/5 h-96 carousel carousel-vertical rounded-box border-dashed border-2">
             {imageFilesArray.length > 0 && (imageFilesArray.map((imageSource, index) => (
-            <div className="carousel-item w-full h-1/8">
-              <div className='grid grid-cols-4 col-auto'>
-              <label htmlFor="my-modal-4" className="p-0 w-full h-full relative btn modal-button bg-transparent border-0 hover:bg-transparent">
-                <img key={4*index}  className="my-1 px-1 thumbnail" src={imageFilesArray[4*index] ? URL.createObjectURL(imageFilesArray[4*index]):""} />
-              </label>
-              <img key={4*index+1} className="my-1 px-1 thumbnail" src={imageFilesArray[4*index+1] ? URL.createObjectURL(imageFilesArray[4*index+1]):""} />
-              <img key={4*index+2} className="my-1 px-1 thumbnail" src={imageFilesArray[4*index+2] ? URL.createObjectURL(imageFilesArray[4*index+2]):""} />
-              <img key={4*index+3} className="my-1 px-1 thumbnail" src={imageFilesArray[4*index+3] ? URL.createObjectURL(imageFilesArray[4*index+3]):""} />
+              <div className="carousel-item w-full h-1/8">
+                <div className='grid grid-cols-4 col-auto'>
+                <button onClick={()=>{parseMetadata(4*index)}} className="p-0 w-full h-full relative btn modal-button bg-transparent border-0 hover:bg-transparent">
+                  <label htmlFor="my-modal-4" className="p-0 w-full h-full relative btn modal-button bg-transparent border-0 hover:bg-transparent">
+                    <img key={4*index} className="my-1 px-1 thumbnail" src={imageFilesArray[4*index] ? URL.createObjectURL(imageFilesArray[4*index]):""} />
+                  </label> 
+                </button>
+                <button onClick={()=> {parseMetadata(4*index+1)}} className="p-0 w-full h-full relative btn modal-button bg-transparent border-0 hover:bg-transparent">
+                  <label htmlFor="my-modal-4" className="p-0 w-full h-full relative btn modal-button bg-transparent border-0 hover:bg-transparent">
+                    <img key={4*index+1} className="my-1 px-1 thumbnail" src={imageFilesArray[4*index+1] ? URL.createObjectURL(imageFilesArray[4*index+1]):""} />
+                  </label>
+                </button>
+                <button onClick={()=> {parseMetadata(4*index+2)}} className="p-0 w-full h-full relative btn modal-button bg-transparent border-0 hover:bg-transparent">
+                  <label htmlFor="my-modal-4" className="p-0 w-full h-full relative btn modal-button bg-transparent border-0 hover:bg-transparent">
+                    <img key={4*index+2} className="my-1 px-1 thumbnail" src={imageFilesArray[4*index+2] ? URL.createObjectURL(imageFilesArray[4*index+2]):""} />
+                  </label>
+                </button>
+                <button onClick={()=> {parseMetadata(4*index+3)}} className="p-0 w-full h-full relative btn modal-button bg-transparent border-0 hover:bg-transparent">
+                  <label htmlFor="my-modal-4" className="p-0 w-full h-full relative btn modal-button bg-transparent border-0 hover:bg-transparent">
+                    <img key={4*index+3} className="my-1 px-1 thumbnail" src={imageFilesArray[4*index+3] ? URL.createObjectURL(imageFilesArray[4*index+3]):""} />
+                  </label>
+                </button>
               </div>
             </div> )))}
           </div>
