@@ -2,15 +2,15 @@ import clsx from 'clsx'
 import { Conditional } from 'components/Conditional'
 import { ContractPageHeader } from 'components/ContractPageHeader'
 import { FormControl } from 'components/FormControl'
-import { AddressInput, TextInput } from 'components/forms/FormInput'
+import { AddressInput } from 'components/forms/FormInput'
 import { useInputState } from 'components/forms/FormInput.hooks'
 import { JsonPreview } from 'components/JsonPreview'
 import { LinkTabs } from 'components/LinkTabs'
 import { whitelistLinkTabs } from 'components/LinkTabs.data'
 import { useContracts } from 'contexts/contracts'
 import { useWallet } from 'contexts/wallet'
-import type { QueryType } from 'contracts/sg721/messages/query'
-import { dispatchQuery, QUERY_LIST } from 'contracts/sg721/messages/query'
+import type { QueryType } from 'contracts/whitelist/messages/query'
+import { dispatchQuery, QUERY_LIST } from 'contracts/whitelist/messages/query'
 import type { NextPage } from 'next'
 import { useRouter } from 'next/router'
 import { NextSeo } from 'next-seo'
@@ -21,14 +21,14 @@ import { withMetadata } from 'utils/layout'
 import { links } from 'utils/links'
 
 const WhitelistQueryPage: NextPage = () => {
-  const { sg721: contract } = useContracts()
+  const { whitelist: contract } = useContracts()
   const wallet = useWallet()
 
   const contractState = useInputState({
     id: 'contract-address',
     name: 'contract-address',
-    title: 'Sg721 Address',
-    subtitle: 'Address of the Sg721 contract',
+    title: 'Whitelist Address',
+    subtitle: 'Address of the Whitelist contract',
   })
   const contractAddress = contractState.value
 
@@ -40,28 +40,18 @@ const WhitelistQueryPage: NextPage = () => {
   })
   const address = addressState.value
 
-  const tokenIdState = useInputState({
-    id: 'token-id',
-    name: 'tokenId',
-    title: 'Token ID',
-    subtitle: 'Token ID of a given token',
-  })
-  const tokenId = tokenIdState.value
+  const [type, setType] = useState<QueryType>('has_started')
 
-  const [type, setType] = useState<QueryType>('owner_of')
-
-  const addressVisible = ['approval', 'all_operators', 'tokens'].includes(type)
-  const tokenIdVisible = ['owner_of', 'approval', 'approvals', 'nft_info', 'all_nft_info'].includes(type)
+  const addressVisible = type === 'has_member'
 
   const { data: response } = useQuery(
-    [contractAddress, type, contract, wallet, tokenId, address] as const,
+    [contractAddress, type, contract, wallet, address] as const,
     async ({ queryKey }) => {
-      const [_contractAddress, _type, _contract, _wallet, _tokenId, _address] = queryKey
+      const [_contractAddress, _type, _contract, _wallet, _address] = queryKey
       const messages = contract?.use(contractAddress)
       const result = await dispatchQuery({
         messages,
         type,
-        tokenId: _tokenId,
         address: _address,
       })
       return result
@@ -121,9 +111,6 @@ const WhitelistQueryPage: NextPage = () => {
           </FormControl>
           <Conditional test={addressVisible}>
             <AddressInput {...addressState} />
-          </Conditional>
-          <Conditional test={tokenIdVisible}>
-            <TextInput {...tokenIdState} />
           </Conditional>
         </div>
         <JsonPreview content={contractAddress ? { type, response } : null} title="Query Response" />

@@ -22,7 +22,7 @@ export interface WhiteListInstance {
   hasStarted: () => Promise<boolean>
   hasEnded: () => Promise<boolean>
   isActive: () => Promise<boolean>
-  members: (limit: number, startAfter?: string) => Promise<string[]>
+  members: (startAfter?: string, limit?: number) => Promise<string[]>
   hasMember: (member: string) => Promise<boolean>
   config: () => Promise<ConfigResponse>
 
@@ -61,7 +61,7 @@ export const WhiteList = (client: SigningCosmWasmClient, txSigner: string): Whit
       return client.queryContractSmart(contractAddress, { is_active: {} })
     }
 
-    const members = async (limit: number, startAfter?: string): Promise<string[]> => {
+    const members = async (startAfter?: string, limit?: number): Promise<string[]> => {
       return client.queryContractSmart(contractAddress, {
         members: { limit, start_after: startAfter },
       })
@@ -81,7 +81,7 @@ export const WhiteList = (client: SigningCosmWasmClient, txSigner: string): Whit
     /// QUERY END
     /// EXECUTE START
     const updateStartTime = async (startTime: string): Promise<string> => {
-      const res = await client.execute(txSigner, contractAddress, { update_start_time: startTime }, 'auto', 'memo')
+      const res = await client.execute(txSigner, contractAddress, { update_start_time: startTime }, 'auto')
       return res.transactionHash
     }
 
