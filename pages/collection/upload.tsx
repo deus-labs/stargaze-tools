@@ -32,8 +32,9 @@ const UploadPage: NextPage = () => {
   const baseTokenURI = useCollectionStore().base_token_uri
   const [baseImageURI, setBaseImageURI] = useState('')
   const [uploadMethod, setUploadMethod] = useState('New')
+  const [parsedMetadata, setParsedMetadata] = useState('')
 
-  const [imagePreviewArray, setImagePreviewArray] = useState<ImagePreview[]>([])
+
 
   const imageFilesRef = useRef<HTMLInputElement>(null)
   const metadataFilesRef = useRef<HTMLInputElement>(null)
@@ -57,7 +58,6 @@ const UploadPage: NextPage = () => {
   const selectImages = (event: ChangeEvent<HTMLInputElement>
   ) => {
       imageFilesArray = []
-      setImagePreviewArray([])
       console.log(event.target.files)
       let reader: FileReader;
       if (event.target.files === null)
@@ -73,14 +73,11 @@ const UploadPage: NextPage = () => {
             { type: 'image/jpg' }
           )
           imageFilesArray.push(imageFile)
-          setImagePreviewArray((prev) => [...prev, {name: imageFile.name, dataURL: URL.createObjectURL(imageFile)}])
         }
         if (!event.target.files) return toast.error('No file selected.')
         reader.readAsArrayBuffer(event.target.files[i]);
         reader.onloadend = function(e){
           imageFilesArray.sort((a, b) => naturalCompare(a.name, b.name))
-          setImagePreviewArray(imageFilesArray.map((file) => { return {name: file.name, dataURL: URL.createObjectURL(file)} }))
-          console.log(imageFilesArray)
         }
       }
   }
@@ -145,6 +142,10 @@ const UploadPage: NextPage = () => {
   const upload = async () => {
     const baseTokenURI = await client.storeDirectory(updatedMetadataFilesArray)
     console.log(baseTokenURI)
+  }
+
+  const parseMetadata = async (index: number) => {
+    setParsedMetadata(JSON.parse(await metadataFilesArray[index].text()))
   }
 
   return (
@@ -322,22 +323,23 @@ const UploadPage: NextPage = () => {
           <label htmlFor="my-modal-4" className="modal cursor-pointer">
             <label className="modal-box absolute top-5 h-3/4" htmlFor="">
               <h3 className="text-lg font-bold">Metadata</h3>
-              <p className="pt-4 font-bold">Description: </p>
+              <p className="pt-4 font-bold">Description: {}</p>
               <input type={'text'} className="pt-2 rounded w-3/4"/>
+              <p className="pt-4 font-bold">{metadataFilesArray[0]?.name}</p>
             </label>
           </label>
           
 
           <div className="ml-20 mr-10 mt-2 w-4/5 h-96 carousel carousel-vertical rounded-box border-dashed border-2">
-            {imagePreviewArray.length > 0 && (imagePreviewArray.map((imageSource, index) => (
+            {imageFilesArray.length > 0 && (imageFilesArray.map((imageSource, index) => (
             <div className="carousel-item w-full h-1/8">
               <div className='grid grid-cols-4 col-auto'>
               <label htmlFor="my-modal-4" className="p-0 w-full h-full relative btn modal-button bg-transparent border-0 hover:bg-transparent">
-                <img key={4*index}  className="my-1 px-1 thumbnail" src={imagePreviewArray[4*index]?.dataURL} />
+                <img key={4*index}  className="my-1 px-1 thumbnail" src={imageFilesArray[4*index] ? URL.createObjectURL(imageFilesArray[4*index]):""} />
               </label>
-              <img key={4*index+1} className="my-1 px-1 thumbnail" src={imagePreviewArray[4*index+1]?.dataURL} />
-              <img key={4*index+2} className="my-1 px-1 thumbnail" src={imagePreviewArray[4*index+2]?.dataURL} />
-              <img key={4*index+3} className="my-1 px-1 thumbnail" src={imagePreviewArray[4*index+3]?.dataURL} />
+              <img key={4*index+1} className="my-1 px-1 thumbnail" src={imageFilesArray[4*index+1] ? URL.createObjectURL(imageFilesArray[4*index+1]):""} />
+              <img key={4*index+2} className="my-1 px-1 thumbnail" src={imageFilesArray[4*index+2] ? URL.createObjectURL(imageFilesArray[4*index+2]):""} />
+              <img key={4*index+3} className="my-1 px-1 thumbnail" src={imageFilesArray[4*index+3] ? URL.createObjectURL(imageFilesArray[4*index+3]):""} />
               </div>
             </div> )))}
           </div>
