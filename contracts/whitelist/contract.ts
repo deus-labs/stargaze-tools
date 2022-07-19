@@ -35,6 +35,70 @@ export interface WhiteListInstance {
   increaseMemberLimit: (limit: number) => Promise<string>
 }
 
+export interface WhitelistMessages {
+  updateStartTime: (startTime: string) => UpdateStartTimeMessage
+  updateEndTime: (endTime: string) => UpdateEndTimeMessage
+  addMembers: (memberList: string[]) => AddMembersMessage
+  removeMembers: (memberList: string[]) => RemoveMembersMessage
+  updatePerAddressLimit: (limit: number) => UpdatePerAddressLimitMessage
+  increaseMemberLimit: (limit: number) => IncreaseMemberLimitMessage
+}
+
+export interface UpdateStartTimeMessage {
+  sender: string
+  contract: string
+  msg: {
+    update_start_time: string
+  }
+  funds: Coin[]
+}
+
+export interface UpdateEndTimeMessage {
+  sender: string
+  contract: string
+  msg: {
+    update_end_time: string
+  }
+  funds: Coin[]
+}
+
+export interface AddMembersMessage {
+  sender: string
+  contract: string
+  msg: {
+    add_members: { to_add: string[] }
+  }
+  funds: Coin[]
+}
+
+export interface RemoveMembersMessage {
+  sender: string
+  contract: string
+  msg: {
+    remove_members: { to_remove: string[] }
+  }
+  funds: Coin[]
+}
+
+export interface UpdatePerAddressLimitMessage {
+  sender: string
+
+  contract: string
+  msg: {
+    update_per_address_limit: number
+  }
+  funds: Coin[]
+}
+
+export interface IncreaseMemberLimitMessage {
+  sender: string
+  contract: string
+  msg: {
+    increase_member_limit: number
+  }
+  funds: Coin[]
+}
+
 export interface WhiteListContract {
   instantiate: (
     codeId: number,
@@ -44,6 +108,8 @@ export interface WhiteListContract {
   ) => Promise<InstantiateResponse>
 
   use: (contractAddress: string) => WhiteListInstance
+
+  messages: (contractAddress: string) => WhitelistMessages
 }
 
 export const WhiteList = (client: SigningCosmWasmClient, txSigner: string): WhiteListContract => {
@@ -91,12 +157,30 @@ export const WhiteList = (client: SigningCosmWasmClient, txSigner: string): Whit
     }
 
     const addMembers = async (memberList: string[]): Promise<string> => {
-      const res = await client.execute(txSigner, contractAddress, { add_members: memberList }, 'auto')
+      const res = await client.execute(
+        txSigner,
+        contractAddress,
+        {
+          add_members: {
+            to_add: memberList,
+          },
+        },
+        'auto',
+      )
       return res.transactionHash
     }
 
     const removeMembers = async (memberList: string[]): Promise<string> => {
-      const res = await client.execute(txSigner, contractAddress, { remove_members: memberList }, 'auto')
+      const res = await client.execute(
+        txSigner,
+        contractAddress,
+        {
+          remove_members: {
+            to_remove: memberList,
+          },
+        },
+        'auto',
+      )
       return res.transactionHash
     }
 
@@ -145,5 +229,82 @@ export const WhiteList = (client: SigningCosmWasmClient, txSigner: string): Whit
     }
   }
 
-  return { use, instantiate }
+  const messages = (contractAddress: string) => {
+    const updateStartTime = (startTime: string) => {
+      return {
+        sender: txSigner,
+        contract: contractAddress,
+        msg: {
+          update_start_time: startTime,
+        },
+        funds: [],
+      }
+    }
+
+    const updateEndTime = (endTime: string) => {
+      return {
+        sender: txSigner,
+        contract: contractAddress,
+        msg: {
+          update_end_time: endTime,
+        },
+        funds: [],
+      }
+    }
+
+    const addMembers = (memberList: string[]) => {
+      return {
+        sender: txSigner,
+        contract: contractAddress,
+        msg: {
+          add_members: { to_add: memberList },
+        },
+        funds: [],
+      }
+    }
+
+    const removeMembers = (memberList: string[]) => {
+      return {
+        sender: txSigner,
+        contract: contractAddress,
+        msg: {
+          remove_members: { to_remove: memberList },
+        },
+        funds: [],
+      }
+    }
+
+    const updatePerAddressLimit = (limit: number) => {
+      return {
+        sender: txSigner,
+        contract: contractAddress,
+        msg: {
+          update_per_address_limit: limit,
+        },
+        funds: [],
+      }
+    }
+
+    const increaseMemberLimit = (limit: number) => {
+      return {
+        sender: txSigner,
+        contract: contractAddress,
+        msg: {
+          increase_member_limit: limit,
+        },
+        funds: [],
+      }
+    }
+
+    return {
+      updateStartTime,
+      updateEndTime,
+      addMembers,
+      removeMembers,
+      updatePerAddressLimit,
+      increaseMemberLimit,
+    }
+  }
+
+  return { use, instantiate, messages }
 }

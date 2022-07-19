@@ -1,7 +1,7 @@
 import { useWallet } from 'contexts/wallet'
 import { useCallback, useEffect, useState } from 'react'
 
-import type { InstantiateResponse, WhiteListContract, WhiteListInstance } from './contract'
+import type { InstantiateResponse, WhiteListContract, WhiteListInstance, WhitelistMessages } from './contract'
 import { WhiteList as initContract } from './contract'
 
 export interface UseWhiteListContractProps {
@@ -15,6 +15,8 @@ export interface UseWhiteListContractProps {
   use: (customAddress?: string) => WhiteListInstance | undefined
 
   updateContractAddress: (contractAddress: string) => void
+
+  messages: (contractAddress: string) => WhitelistMessages | undefined
 }
 
 export function useWhiteListContract(): UseWhiteListContractProps {
@@ -59,9 +61,14 @@ export function useWhiteListContract(): UseWhiteListContractProps {
     [whiteList, address],
   )
 
+  const messages = useCallback((): WhitelistMessages | undefined => {
+    return whiteList?.messages(address)
+  }, [whiteList, address])
+
   return {
     instantiate,
     use,
     updateContractAddress,
+    messages,
   }
 }
