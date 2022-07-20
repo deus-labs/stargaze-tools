@@ -145,7 +145,6 @@ const CollectionActionsPage: NextPage = () => {
           {showWhitelistField && <AddressInput {...whitelistState} />}
           {showLimitField && <NumberInput {...limitState} />}
           {showTokenIdField && <NumberInput {...tokenIdState} />}
-          {/* TODO: Fix address execute message */}
           <Conditional test={showDateField}>
             <FormControl htmlId="start-date" subtitle="Start time for the minting" title="Start Time">
               <InputDateTime minDate={new Date()} onChange={(date) => setTimestamp(date)} value={timestamp} />

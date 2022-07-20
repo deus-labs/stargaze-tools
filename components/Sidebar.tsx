@@ -10,7 +10,7 @@ import { WalletLoader } from './WalletLoader'
 
 const routes = [
   { text: 'Create Collection', href: `/collections/` },
-  { text: 'Collection Actions', href: `/collections/actions` },
+  { text: 'Collections', href: `/collections` },
   { text: 'Contract Dashboards', href: `/contracts/` },
 ]
 
