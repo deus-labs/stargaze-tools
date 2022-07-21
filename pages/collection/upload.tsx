@@ -168,6 +168,20 @@ const UploadPage: NextPage = () => {
     console.log(parsedMetadata)
   }
 
+  const addMetadataAttribute = () => {
+    let parsedMetadataObject = {...parsedMetadata}
+    let trait_type_input = document.querySelector('#add_attribute_trait_type_input') as HTMLInputElement
+    let trait_value_input = document.querySelector('#add_attribute_trait_value_input') as HTMLInputElement
+    parsedMetadata.attributes.push({trait_type: trait_type_input?.value, value: trait_value_input?.value})
+    trait_type_input.value = ''
+    trait_value_input.value = ''
+    console.log(parsedMetadata?.attributes)
+    setParsedMetadata(parsedMetadataObject)
+    console.log(parsedMetadata)
+  }
+
+
+
   const updateMetadataFileArray = async () => {
     console.log("Updating...")
     let metadataFileBlob = new Blob([JSON.stringify(parsedMetadata)], {
@@ -411,7 +425,7 @@ const UploadPage: NextPage = () => {
               {parsedMetadata && (parsedMetadata?.attributes.map((content: any, key: number) => (
               <div key={`attribute-${key}`} className='grid grid-cols-3'>
                 <div key={`trait_type-${content.trait_type}`} className="flex-row">
-                  <input key={`input-${content.trait_type}`} className="pt-2 mb-2 rounded w-1/2" type={'text'} onChange={()=>{removeMetadataAttribute(key)}}defaultValue={parsedMetadata ? content.trait_type : ""} />
+                  <input key={`input-${content.trait_type}`} className="pt-2 mb-2 rounded w-1/2" type={'text'} onChange={()=>{}}defaultValue={parsedMetadata ? content.trait_type : ""} />
                 </div>
                 <div key={`value-${content.value}`} className="flex-row">
                   <input key={`input-${content.name}`} className="pt-2 mb-2 rounded w-1/2" type={'text'} defaultValue={parsedMetadata ? content.value : ""}  />
@@ -424,12 +438,12 @@ const UploadPage: NextPage = () => {
               )))}
                <div className='grid grid-cols-3'>
                 <div className="flex-row">
-                <input className="pt-2 mb-2 rounded w-1/2" type={'text'} defaultValue= {""}  />
+                <input id="add_attribute_trait_type_input" className="pt-2 mb-2 rounded w-1/2" type={'text'} defaultValue= {""}  />
                 </div>
                 <div className="flex-row">
-                <input className="pt-2 mb-2 rounded w-1/2" type={'text'} defaultValue={""}  />
+                <input id="add_attribute_trait_value_input" className="pt-2 mb-2 rounded w-1/2" type={'text'} defaultValue={""}  />
                 </div>
-                <button className="flex-row mb-2 rounded w-1/4 border" onClick={()=>{}}>Add</button>
+                <button className="flex-row mb-2 rounded w-1/4 border" onClick={()=>{addMetadataAttribute()}}>Add</button>
               </div>  
               
               <button onClick={()=>{updateMetadataFileArray()}} className='w-1/4 bg-blue border'>Update Metadata</button>
