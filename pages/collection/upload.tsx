@@ -157,6 +157,18 @@ const UploadPage: NextPage = () => {
   //   setParsedMetadata(parsedMetadata)
     
   // }, [parsedMetadata?.attributes])
+
+  const updateMetadataAttributes = async (index: number) => {
+    console.log("Updating metadata attributes...")
+    let parsedMetadataObject = {...parsedMetadata}
+    let trait_type_input = document.querySelector(`#attribute-trait-type-input-${index}`) as HTMLInputElement
+    let trait_value_input = document.querySelector(`#attribute-trait-value-input-${index}`) as HTMLInputElement
+    
+    parsedMetadata.attributes[index] = {trait_type: trait_type_input?.value, value: trait_value_input?.value}
+    setParsedMetadata(parsedMetadataObject)
+  
+  }
+
   
   const removeMetadataAttribute = (index: number) => {
     let parsedMetadataObject = {...parsedMetadata}
@@ -425,10 +437,10 @@ const UploadPage: NextPage = () => {
               {parsedMetadata && (parsedMetadata?.attributes.map((content: any, key: number) => (
               <div key={`attribute-${key}`} className='grid grid-cols-3'>
                 <div key={`trait_type-${content.trait_type}`} className="flex-row">
-                  <input key={`input-${content.trait_type}`} className="pt-2 mb-2 rounded w-1/2" type={'text'} onChange={()=>{}}defaultValue={parsedMetadata ? content.trait_type : ""} />
+                  <input key={`input-${content.trait_type}`} id={`attribute-trait-type-input-${key}`} className="pt-2 mb-2 rounded w-1/2" type={'text'} onBlur={()=>{updateMetadataAttributes(key)}} defaultValue={parsedMetadata ? content.trait_type : ""} />
                 </div>
                 <div key={`value-${content.value}`} className="flex-row">
-                  <input key={`input-${content.name}`} className="pt-2 mb-2 rounded w-1/2" type={'text'} defaultValue={parsedMetadata ? content.value : ""}  />
+                  <input key={`input-${content.name}`} id={`attribute-trait-value-input-${key}`} className="pt-2 mb-2 rounded w-1/2" type={'text'} onBlur={()=>{updateMetadataAttributes(key)}} defaultValue={parsedMetadata ? content.value : ""}  />
                 </div>
                 <div key={`button-${content.trait_type}`} className="flex-row">
                   <button key={`remove-${content.trait_type}`} className="flex-row mb-2 rounded w-1/4 border" onClick={(e)=>{e.preventDefault();removeMetadataAttribute(key);}}>Remove</button>
