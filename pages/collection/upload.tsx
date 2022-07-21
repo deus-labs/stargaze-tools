@@ -15,6 +15,7 @@ import { withMetadata } from 'utils/layout'
 import { links } from 'utils/links'
 import { naturalCompare } from 'utils/sort'
 import { UrlInput } from '../../components/forms/FormInput';
+import { AnchorButtonProps } from '../../components/AnchorButton';
 
 interface ImagePreview{
   name: string,
@@ -32,7 +33,8 @@ const UploadPage: NextPage = () => {
   const baseTokenURI = useCollectionStore().base_token_uri
   const [baseImageURI, setBaseImageURI] = useState('')
   const [uploadMethod, setUploadMethod] = useState('New')
-  const [parsedMetadata, setParsedMetadata] = useState('')
+  const [parsedMetadata, setParsedMetadata] = useState<any>(null)
+  const [metadataAttributes, setMetadataAttributes] = useState<Record<string, string>[]>([])
 
 
 
@@ -107,6 +109,7 @@ const UploadPage: NextPage = () => {
       reader.onloadend = function(e){
         metadataFilesArray.sort((a, b) => naturalCompare(a.name, b.name))
         console.log(metadataFilesArray)
+        parseMetadata(0)
       }
     }
   }
@@ -145,8 +148,35 @@ const UploadPage: NextPage = () => {
   }
 
   const parseMetadata = async (index: number) => {
-    setParsedMetadata(await metadataFilesArray[index]?.text())
+    console.log("Parsing metadata...")
+    setParsedMetadata(JSON.parse(await metadataFilesArray[index]?.text()) || null)
   }
+
+  // useEffect(() => {
+  //   setParsedMetadata(parsedMetadata)
+    
+  // }, [parsedMetadata?.attributes])
+  let parsedMetadataObject: any;
+  const removeMetadataAttribute = (index: number) => {
+    parsedMetadataObject = {...parsedMetadata}
+    
+    console.log(parsedMetadata?.attributes)
+    console.log(parsedMetadata.attributes.splice(index,1))
+    console.log(parsedMetadata?.attributes)
+    setParsedMetadata(parsedMetadataObject)
+    console.log(parsedMetadata)
+  }
+
+  const updateMetadataAttributes = async (index: number) => {
+    console.log(parsedMetadata?.attributes)
+    //remove parsedMetadata attribute
+    parsedMetadata.attributes.splice(index,1)
+    console.log("Splicing...")
+    console.log(parsedMetadata?.attributes)
+    setParsedMetadata(parsedMetadata)
+    console.log(parsedMetadata)
+  }
+  
 
 
   return (
@@ -322,11 +352,51 @@ const UploadPage: NextPage = () => {
 
           <input type="checkbox" id="my-modal-4" className="modal-toggle" />
           <label htmlFor="my-modal-4" className="modal cursor-pointer">
-            <label className="modal-box absolute top-5 h-3/4" htmlFor="">
+            <label className="modal-box max-w-5xl absolute top-5 w-full h-3/4" htmlFor="">
               <h3 className="text-lg font-bold">Metadata</h3>
-              <p className="pt-4 font-bold">{parsedMetadata}</p>
-              <input type={'text'} className="pt-2 rounded w-3/4"/>
-              <p className="pt-4 font-bold">{}</p>
+              <div className='flex-row'>
+                <label className="flex mt-2 mr-2 font-bold">Name</label>
+                <input id="metadata_name" onChange={()=>{}} className="pt-2 rounded w-1/3" type={'text'} defaultValue={parsedMetadata ? parsedMetadata.name : ""} />
+              </div>
+              <div className='my-1 flex-row'>
+              <label className="flex mt-2 mr-2 font-bold">Description</label>
+              <input className="pt-2 rounded w-3/4" type={'text'} defaultValue={parsedMetadata ? parsedMetadata.description : ""}  />
+              </div>
+              <p className="pt-4 font-bold">Attributes</p>
+              <div className='grid grid-cols-3'>
+                <div className="flex-row">
+                <label className="flex mt-2 mr-2 font-bold">Trait Type</label> 
+                </div>
+                <div className="flex-row">
+                <label className="flex mt-2 mr-2 font-bold">Value</label> 
+                </div>
+              </div>  
+              {parsedMetadata && (parsedMetadata?.attributes.map((content: any, key: number) => (
+              <div key={`attribute-${key}`} className='grid grid-cols-3'>
+                <div key={`trait_type-${content.trait_type}`} className="flex-row">
+                  <input key={`input-${content.trait_type}`} className="pt-2 mb-2 rounded w-1/2" type={'text'} onChange={()=>{removeMetadataAttribute(key)}}defaultValue={parsedMetadata ? content.trait_type : ""} />
+                </div>
+                <div key={`value-${content.value}`} className="flex-row">
+                  <input key={`input-${content.name}`} className="pt-2 mb-2 rounded w-1/2" type={'text'} defaultValue={parsedMetadata ? content.value : ""}  />
+                </div>
+                <div key={`button-${content.trait_type}`} className="flex-row">
+                  <button key={`remove-${content.trait_type}`} className="flex-row mb-2 rounded w-1/4 border" onClick={()=>{console.log("Remove index: " + key);removeMetadataAttribute(key);}}>Remove</button>
+                </div>
+              </div>  
+
+              )))}
+               <div className='grid grid-cols-3'>
+                <div className="flex-row">
+                <input className="pt-2 mb-2 rounded w-1/2" type={'text'} defaultValue= {""}  />
+                </div>
+                <div className="flex-row">
+                <input className="pt-2 mb-2 rounded w-1/2" type={'text'} defaultValue={""}  />
+                </div>
+                <button className="flex-row mb-2 rounded w-1/4 border" onClick={()=>{}}>Add</button>
+              </div>  
+              
+              <button onClick={()=>{updateMetadataAttributes(0)}} className='w-1/4 bg-blue border'>Update Metadata</button>
+            
             </label>
           </label>
           
@@ -335,22 +405,22 @@ const UploadPage: NextPage = () => {
             {imageFilesArray.length > 0 && (imageFilesArray.map((imageSource, index) => (
               <div className="carousel-item w-full h-1/8">
                 <div className='grid grid-cols-4 col-auto'>
-                <button onClick={()=>{parseMetadata(4*index)}} className="p-0 w-full h-full relative btn modal-button bg-transparent border-0 hover:bg-transparent">
+                <button key={4*index} onClick={()=>{parseMetadata(4*index)}} className="p-0 w-full h-full relative btn modal-button bg-transparent border-0 hover:bg-transparent">
                   <label htmlFor="my-modal-4" className="p-0 w-full h-full relative btn modal-button bg-transparent border-0 hover:bg-transparent">
                     <img key={4*index} className="my-1 px-1 thumbnail" src={imageFilesArray[4*index] ? URL.createObjectURL(imageFilesArray[4*index]):""} />
                   </label> 
                 </button>
-                <button onClick={()=> {parseMetadata(4*index+1)}} className="p-0 w-full h-full relative btn modal-button bg-transparent border-0 hover:bg-transparent">
+                <button key={4*index+1} onClick={()=> {parseMetadata(4*index+1)}} className="p-0 w-full h-full relative btn modal-button bg-transparent border-0 hover:bg-transparent">
                   <label htmlFor="my-modal-4" className="p-0 w-full h-full relative btn modal-button bg-transparent border-0 hover:bg-transparent">
                     <img key={4*index+1} className="my-1 px-1 thumbnail" src={imageFilesArray[4*index+1] ? URL.createObjectURL(imageFilesArray[4*index+1]):""} />
                   </label>
                 </button>
-                <button onClick={()=> {parseMetadata(4*index+2)}} className="p-0 w-full h-full relative btn modal-button bg-transparent border-0 hover:bg-transparent">
+                <button key={4*index+2} onClick={()=> {parseMetadata(4*index+2)}} className="p-0 w-full h-full relative btn modal-button bg-transparent border-0 hover:bg-transparent">
                   <label htmlFor="my-modal-4" className="p-0 w-full h-full relative btn modal-button bg-transparent border-0 hover:bg-transparent">
                     <img key={4*index+2} className="my-1 px-1 thumbnail" src={imageFilesArray[4*index+2] ? URL.createObjectURL(imageFilesArray[4*index+2]):""} />
                   </label>
                 </button>
-                <button onClick={()=> {parseMetadata(4*index+3)}} className="p-0 w-full h-full relative btn modal-button bg-transparent border-0 hover:bg-transparent">
+                <button key={4*index+3} onClick={()=> {parseMetadata(4*index+3)}} className="p-0 w-full h-full relative btn modal-button bg-transparent border-0 hover:bg-transparent">
                   <label htmlFor="my-modal-4" className="p-0 w-full h-full relative btn modal-button bg-transparent border-0 hover:bg-transparent">
                     <img key={4*index+3} className="my-1 px-1 thumbnail" src={imageFilesArray[4*index+3] ? URL.createObjectURL(imageFilesArray[4*index+3]):""} />
                   </label>
