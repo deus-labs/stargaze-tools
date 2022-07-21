@@ -35,6 +35,7 @@ const UploadPage: NextPage = () => {
   const [uploadMethod, setUploadMethod] = useState('New')
   const [parsedMetadata, setParsedMetadata] = useState<any>(null)
   const [metadataAttributes, setMetadataAttributes] = useState<Record<string, string>[]>([])
+  const [metadataFileArrayIndex, setMetadataFileArrayIndex] = useState(0)
 
 
 
@@ -109,7 +110,6 @@ const UploadPage: NextPage = () => {
       reader.onloadend = function(e){
         metadataFilesArray.sort((a, b) => naturalCompare(a.name, b.name))
         console.log(metadataFilesArray)
-        parseMetadata(0)
       }
     }
   }
@@ -149,6 +149,7 @@ const UploadPage: NextPage = () => {
 
   const parseMetadata = async (index: number) => {
     console.log("Parsing metadata...")
+    setMetadataFileArrayIndex(index)
     setParsedMetadata(JSON.parse(await metadataFilesArray[index]?.text()) || null)
   }
 
@@ -156,9 +157,9 @@ const UploadPage: NextPage = () => {
   //   setParsedMetadata(parsedMetadata)
     
   // }, [parsedMetadata?.attributes])
-  let parsedMetadataObject: any;
+  
   const removeMetadataAttribute = (index: number) => {
-    parsedMetadataObject = {...parsedMetadata}
+    let parsedMetadataObject = {...parsedMetadata}
     
     console.log(parsedMetadata?.attributes)
     console.log(parsedMetadata.attributes.splice(index,1))
@@ -167,14 +168,50 @@ const UploadPage: NextPage = () => {
     console.log(parsedMetadata)
   }
 
-  const updateMetadataAttributes = async (index: number) => {
-    console.log(parsedMetadata?.attributes)
-    //remove parsedMetadata attribute
-    parsedMetadata.attributes.splice(index,1)
-    console.log("Splicing...")
-    console.log(parsedMetadata?.attributes)
-    setParsedMetadata(parsedMetadata)
-    console.log(parsedMetadata)
+  const updateMetadataFileArray = async () => {
+    console.log("Updating...")
+    let metadataFileBlob = new Blob([JSON.stringify(parsedMetadata)], {
+      type: 'application/json',
+    })
+    let updatedMetadataFile = new File(
+      [metadataFileBlob],
+      metadataFilesArray[metadataFileArrayIndex].name,
+      { type: 'application/json' }
+    )
+    metadataFilesArray[metadataFileArrayIndex] = updatedMetadataFile
+    
+    
+    // console.log("clicked")
+    // let a = document.querySelector('#metadata_name') as HTMLInputElement
+    // console.log(a?.value ? a.value : 'no value')
+
+    // console.log("clicked")
+    // const metadataJSON = JSON.parse(await metadataFilesArray[index]?.text()) 
+    // let keys = Object.keys(metadataJSON)
+    // console.log(metadataJSON["attributes"][0]["trait_type"])
+    
+    // Object.keys(metadataJSON).forEach(key => {
+    // //get metadataJSON subkeys
+    //   if (typeof metadataJSON[key] === 'object') {
+    //     Object.keys(metadataJSON[key]).forEach(subkey => {
+    //       //get subkeys subkeys
+    //       if (typeof metadataJSON[key][subkey] === 'object') {
+    //         Object.keys(metadataJSON[key][subkey]).forEach(subsubkey => {
+    //           console.log(metadataJSON[key][subkey][subsubkey])
+    //         })
+    //       }
+    //     })
+
+    //   } 
+    // })
+    
+    // for (let i = 0; i < keysArray.length; i++) {
+    //   if (typeof metadataJSON[keysArray[i]] === 'object') {
+    //     let subkeysArray = Object.keys(metadataJSON[keysArray[i]])
+    //     console.log(subkeysArray)
+    //     console.log(metadataJSON[keysArray[i]][subkeysArray[1]])
+    //   }
+    // }    
   }
   
 
@@ -380,7 +417,7 @@ const UploadPage: NextPage = () => {
                   <input key={`input-${content.name}`} className="pt-2 mb-2 rounded w-1/2" type={'text'} defaultValue={parsedMetadata ? content.value : ""}  />
                 </div>
                 <div key={`button-${content.trait_type}`} className="flex-row">
-                  <button key={`remove-${content.trait_type}`} className="flex-row mb-2 rounded w-1/4 border" onClick={()=>{console.log("Remove index: " + key);removeMetadataAttribute(key);}}>Remove</button>
+                  <button key={`remove-${content.trait_type}`} className="flex-row mb-2 rounded w-1/4 border" onClick={(e)=>{e.preventDefault();removeMetadataAttribute(key);}}>Remove</button>
                 </div>
               </div>  
 
@@ -395,7 +432,7 @@ const UploadPage: NextPage = () => {
                 <button className="flex-row mb-2 rounded w-1/4 border" onClick={()=>{}}>Add</button>
               </div>  
               
-              <button onClick={()=>{updateMetadataAttributes(0)}} className='w-1/4 bg-blue border'>Update Metadata</button>
+              <button onClick={()=>{updateMetadataFileArray()}} className='w-1/4 bg-blue border'>Update Metadata</button>
             
             </label>
           </label>
@@ -429,15 +466,6 @@ const UploadPage: NextPage = () => {
             </div> )))}
           </div>
           </div> 
-         
-
-
-          {/* <div className={`grid grid-cols-12 col-auto`}>
-          {previewURI.length > 0 && (previewURI.map((imageSource, index) => (
-            <img key={index} className="ml-8 mt-2 thumbnail" src={imageSource.toString()}></img>
-          )))}
-          </div> */}
-
           
         </div>
       )}
