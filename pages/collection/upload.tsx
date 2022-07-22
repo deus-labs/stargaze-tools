@@ -150,13 +150,34 @@ const UploadPage: NextPage = () => {
   const parseMetadata = async (index: number) => {
     console.log("Parsing metadata...")
     setMetadataFileArrayIndex(index)
-    setParsedMetadata(JSON.parse(await metadataFilesArray[index]?.text()) || null)
+    let parsedMetadataObject = JSON.parse(await metadataFilesArray[index]?.text()) || null 
+    setParsedMetadata(parsedMetadataObject)
+    let metadata_name = document.querySelector("#metadata_name") as HTMLInputElement
+    let metadata_description = document.querySelector("#metadata_description") as HTMLInputElement
+    let metadata_external_url = document.querySelector("#metadata_external_url") as HTMLInputElement
+    let metadata_image = document.querySelector("#metadata_image") as HTMLInputElement
+    metadata_name.value = parsedMetadataObject?.name || ''
+    metadata_description.value = parsedMetadataObject?.description || ''
+    metadata_external_url.value = parsedMetadataObject?.external_url || ''
+    metadata_image.value = (updatedMetadataFilesArray.length > 0 ? (JSON.parse(await updatedMetadataFilesArray[index]?.text()))?.image || "" : 'Not uploaded yet.') 
   }
 
   // useEffect(() => {
-  //   setParsedMetadata(parsedMetadata)
-    
+  
   // }, [parsedMetadata?.attributes])
+
+  const updateMainMetadataValues = () => {
+    console.log("Updating main metadata values...")
+    let parsedMetadataObject = {...parsedMetadata}
+    let metadata_name = document.querySelector("#metadata_name") as HTMLInputElement
+    let metadata_description = document.querySelector("#metadata_description") as HTMLInputElement
+    let metadata_external_url = document.querySelector("#metadata_external_url") as HTMLInputElement
+    
+    parsedMetadataObject.name = metadata_name.value
+    parsedMetadataObject.description = metadata_description.value
+    parsedMetadataObject.external_url = metadata_external_url.value
+    setParsedMetadata(parsedMetadataObject)
+  }
 
   const updateMetadataAttributes = async (index: number) => {
     console.log("Updating metadata attributes...")
@@ -166,10 +187,8 @@ const UploadPage: NextPage = () => {
     
     parsedMetadata.attributes[index] = {trait_type: trait_type_input?.value, value: trait_value_input?.value}
     setParsedMetadata(parsedMetadataObject)
-  
   }
 
-  
   const removeMetadataAttribute = (index: number) => {
     let parsedMetadataObject = {...parsedMetadata}
     
@@ -192,9 +211,8 @@ const UploadPage: NextPage = () => {
     console.log(parsedMetadata)
   }
 
-
-
   const updateMetadataFileArray = async () => {
+    console.log("Current Parsed Data: " + parsedMetadata)
     console.log("Updating...")
     let metadataFileBlob = new Blob([JSON.stringify(parsedMetadata)], {
       type: 'application/json',
@@ -205,42 +223,8 @@ const UploadPage: NextPage = () => {
       { type: 'application/json' }
     )
     metadataFilesArray[metadataFileArrayIndex] = updatedMetadataFile
-    
-    
-    // console.log("clicked")
-    // let a = document.querySelector('#metadata_name') as HTMLInputElement
-    // console.log(a?.value ? a.value : 'no value')
-
-    // console.log("clicked")
-    // const metadataJSON = JSON.parse(await metadataFilesArray[index]?.text()) 
-    // let keys = Object.keys(metadataJSON)
-    // console.log(metadataJSON["attributes"][0]["trait_type"])
-    
-    // Object.keys(metadataJSON).forEach(key => {
-    // //get metadataJSON subkeys
-    //   if (typeof metadataJSON[key] === 'object') {
-    //     Object.keys(metadataJSON[key]).forEach(subkey => {
-    //       //get subkeys subkeys
-    //       if (typeof metadataJSON[key][subkey] === 'object') {
-    //         Object.keys(metadataJSON[key][subkey]).forEach(subsubkey => {
-    //           console.log(metadataJSON[key][subkey][subsubkey])
-    //         })
-    //       }
-    //     })
-
-    //   } 
-    // })
-    
-    // for (let i = 0; i < keysArray.length; i++) {
-    //   if (typeof metadataJSON[keysArray[i]] === 'object') {
-    //     let subkeysArray = Object.keys(metadataJSON[keysArray[i]])
-    //     console.log(subkeysArray)
-    //     console.log(metadataJSON[keysArray[i]][subkeysArray[1]])
-    //   }
-    // }    
+    console.log(JSON.parse(await metadataFilesArray[metadataFileArrayIndex]?.text()))
   }
-  
-
 
   return (
     <div>
@@ -415,15 +399,23 @@ const UploadPage: NextPage = () => {
 
           <input type="checkbox" id="my-modal-4" className="modal-toggle" />
           <label htmlFor="my-modal-4" className="modal cursor-pointer">
-            <label className="modal-box max-w-5xl absolute top-5 w-full h-3/4" htmlFor="">
+            <label className="modal-box max-w-5xl max-h-fit absolute top-5 bottom-5 w-full" htmlFor="">
               <h3 className="text-lg font-bold">Metadata</h3>
               <div className='flex-row'>
                 <label className="flex mt-2 mr-2 font-bold">Name</label>
-                <input id="metadata_name" onChange={()=>{}} className="pt-2 rounded w-1/3" type={'text'} defaultValue={parsedMetadata ? parsedMetadata.name : ""} />
+                <input key={"name-input"} id="metadata_name" className="pt-2 rounded w-1/3" type={'text'} onBlur={()=>{updateMainMetadataValues()}} defaultValue={parsedMetadata ? parsedMetadata.name : ""}/>
               </div>
               <div className='my-1 flex-row'>
-              <label className="flex mt-2 mr-2 font-bold">Description</label>
-              <input className="pt-2 rounded w-3/4" type={'text'} defaultValue={parsedMetadata ? parsedMetadata.description : ""}  />
+                <label className="flex mt-2 mr-2 font-bold">Description</label>
+                <input key={"description-input"} id="metadata_description" className="pt-2 rounded w-3/4" type={'text'} onBlur={()=>{updateMainMetadataValues()}} defaultValue={parsedMetadata ? parsedMetadata.description : ""}  />
+              </div>
+              <div className='my-1 flex-row'>
+                <label className="flex mt-2 mr-2 font-bold">External URL</label>
+                <input key={"external-url-input"} id="metadata_external_url" className="pt-2 rounded w-3/4" type={'text'} onBlur={()=>{updateMainMetadataValues()}} defaultValue={parsedMetadata ? parsedMetadata.external_url : ""}  />
+              </div>
+              <div className='my-1 flex-row'>
+                <label className="flex mt-2 mr-2 font-bold">Image</label>
+                <input key={"image-input"} id="metadata_image" className="pt-2 rounded w-3/4" type={'text'} disabled defaultValue={parsedMetadata ? parsedMetadata.image : ""}  />
               </div>
               <p className="pt-4 font-bold">Attributes</p>
               <div className='grid grid-cols-3'>
@@ -437,10 +429,10 @@ const UploadPage: NextPage = () => {
               {parsedMetadata && (parsedMetadata?.attributes.map((content: any, key: number) => (
               <div key={`attribute-${key}`} className='grid grid-cols-3'>
                 <div key={`trait_type-${content.trait_type}`} className="flex-row">
-                  <input key={`input-${content.trait_type}`} id={`attribute-trait-type-input-${key}`} className="pt-2 mb-2 rounded w-1/2" type={'text'} onBlur={()=>{updateMetadataAttributes(key)}} defaultValue={parsedMetadata ? content.trait_type : ""} />
+                  <input key={`input-${content.trait_type}`} id={`attribute-trait-type-input-${key}`} className="pt-2 mb-2 rounded w-3/4" type={'text'} onBlur={()=>{updateMetadataAttributes(key)}} defaultValue={parsedMetadata ? content.trait_type : ""} />
                 </div>
                 <div key={`value-${content.value}`} className="flex-row">
-                  <input key={`input-${content.name}`} id={`attribute-trait-value-input-${key}`} className="pt-2 mb-2 rounded w-1/2" type={'text'} onBlur={()=>{updateMetadataAttributes(key)}} defaultValue={parsedMetadata ? content.value : ""}  />
+                  <input key={`input-${content.name}`} id={`attribute-trait-value-input-${key}`} className="pt-2 mb-2 rounded w-3/4" type={'text'} onBlur={()=>{updateMetadataAttributes(key)}} defaultValue={parsedMetadata ? content.value : ""}  />
                 </div>
                 <div key={`button-${content.trait_type}`} className="flex-row">
                   <button key={`remove-${content.trait_type}`} className="flex-row mb-2 rounded w-1/4 border" onClick={(e)=>{e.preventDefault();removeMetadataAttribute(key);}}>Remove</button>
@@ -450,10 +442,10 @@ const UploadPage: NextPage = () => {
               )))}
                <div className='grid grid-cols-3'>
                 <div className="flex-row">
-                <input id="add_attribute_trait_type_input" className="pt-2 mb-2 rounded w-1/2" type={'text'} defaultValue= {""}  />
+                  <input id="add_attribute_trait_type_input" className="pt-2 mb-2 rounded w-3/4" type={'text'} defaultValue= {""}  />
                 </div>
                 <div className="flex-row">
-                <input id="add_attribute_trait_value_input" className="pt-2 mb-2 rounded w-1/2" type={'text'} defaultValue={""}  />
+                  <input id="add_attribute_trait_value_input" className="pt-2 mb-2 rounded w-3/4" type={'text'} defaultValue={""}  />
                 </div>
                 <button className="flex-row mb-2 rounded w-1/4 border" onClick={()=>{addMetadataAttribute()}}>Add</button>
               </div>  
@@ -463,7 +455,6 @@ const UploadPage: NextPage = () => {
             </label>
           </label>
           
-
           <div className="ml-20 mr-10 mt-2 w-4/5 h-96 carousel carousel-vertical rounded-box border-dashed border-2">
             {imageFilesArray.length > 0 && (imageFilesArray.map((imageSource, index) => (
               <div className="carousel-item w-full h-1/8">
