@@ -16,6 +16,7 @@ import { links } from 'utils/links'
 import { naturalCompare } from 'utils/sort'
 import { UrlInput } from '../../components/forms/FormInput';
 import { AnchorButtonProps } from '../../components/AnchorButton';
+import { Conditional } from 'components/Conditional'
 
 interface ImagePreview{
   name: string,
@@ -459,26 +460,34 @@ const UploadPage: NextPage = () => {
             {imageFilesArray.length > 0 && (imageFilesArray.map((imageSource, index) => (
               <div className="carousel-item w-full h-1/8">
                 <div className='grid grid-cols-4 col-auto'>
+                <Conditional test={imageFilesArray[4*index] !== null}>
                 <button key={4*index} onClick={()=>{parseMetadata(4*index)}} className="p-0 w-full h-full relative btn modal-button bg-transparent border-0 hover:bg-transparent">
                   <label htmlFor="my-modal-4" className="p-0 w-full h-full relative btn modal-button bg-transparent border-0 hover:bg-transparent">
                     <img key={4*index} className="my-1 px-1 thumbnail" src={imageFilesArray[4*index] ? URL.createObjectURL(imageFilesArray[4*index]):""} />
                   </label> 
                 </button>
+                </Conditional>
+                <Conditional test={imageFilesArray.length > 4*index+1}>
                 <button key={4*index+1} onClick={()=> {parseMetadata(4*index+1)}} className="p-0 w-full h-full relative btn modal-button bg-transparent border-0 hover:bg-transparent">
                   <label htmlFor="my-modal-4" className="p-0 w-full h-full relative btn modal-button bg-transparent border-0 hover:bg-transparent">
                     <img key={4*index+1} className="my-1 px-1 thumbnail" src={imageFilesArray[4*index+1] ? URL.createObjectURL(imageFilesArray[4*index+1]):""} />
                   </label>
                 </button>
+                </Conditional>
+                <Conditional test={imageFilesArray.length > 4*index+2}>
                 <button key={4*index+2} onClick={()=> {parseMetadata(4*index+2)}} className="p-0 w-full h-full relative btn modal-button bg-transparent border-0 hover:bg-transparent">
                   <label htmlFor="my-modal-4" className="p-0 w-full h-full relative btn modal-button bg-transparent border-0 hover:bg-transparent">
                     <img key={4*index+2} className="my-1 px-1 thumbnail" src={imageFilesArray[4*index+2] ? URL.createObjectURL(imageFilesArray[4*index+2]):""} />
                   </label>
                 </button>
+                </Conditional>
+                <Conditional test={imageFilesArray.length > 4*index+3}>
                 <button key={4*index+3} onClick={()=> {parseMetadata(4*index+3)}} className="p-0 w-full h-full relative btn modal-button bg-transparent border-0 hover:bg-transparent">
                   <label htmlFor="my-modal-4" className="p-0 w-full h-full relative btn modal-button bg-transparent border-0 hover:bg-transparent">
                     <img key={4*index+3} className="my-1 px-1 thumbnail" src={imageFilesArray[4*index+3] ? URL.createObjectURL(imageFilesArray[4*index+3]):""} />
                   </label>
                 </button>
+                </Conditional>
               </div>
             </div> )))}
           </div>
